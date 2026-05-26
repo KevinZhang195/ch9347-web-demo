@@ -476,12 +476,23 @@ html, body {
 }
 .info-underline {
     width: 40%; height: 2px;
+    background: #E6A817;
     background: var(--gold-text);
 }
 .info-model-value, .info-manufacturer-value, .info-code-value {
-    font-weight: bold; color: var(--gold-text);
+    font-weight: bold; color: #E6A817;
+    color: var(--gold-text);
     text-align: center; word-break: break-all;
     font-size: clamp(14px, 1.5vw, 18px);
+}
+#battery-info.disconnected .info-label,
+#battery-info.disconnected .info-model-value,
+#battery-info.disconnected .info-manufacturer-value,
+#battery-info.disconnected .info-code-value {
+    color: #B0B0B0;
+}
+#battery-info.disconnected .info-underline {
+    background: #B0B0B0;
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -781,14 +792,14 @@ body { min-width: 480px; overflow-x: auto; }
             <div id="bottom-bar">
                 <div id="battery-info">
                     <div class="info-column">
+                        <span class="info-label">电池生产厂商</span>
+                        <div class="info-underline"></div>
+                        <span class="info-manufacturer-value">--</span>
+                    </div>
+                    <div class="info-column">
                         <span class="info-label">电池型号</span>
                         <div class="info-underline"></div>
                         <span class="info-model-value">--</span>
-                    </div>
-                    <div class="info-column">
-                        <span class="info-label">电芯生产厂商</span>
-                        <div class="info-underline"></div>
-                        <span class="info-manufacturer-value">--</span>
                     </div>
                     <div class="info-column">
                         <span class="info-label">电池编码</span>
@@ -2557,21 +2568,30 @@ class BatteryInfoBarWidget {
         this._batteryModel = '--';
         this._manufacturer = '--';
         this._batteryCode = '--';
+        this._connected = false;
 
         this._ro = observeResize(this._el, () => this._updateFonts());
+        this._renderValues();
+    }
+
+    setConnected(c) {
+        if (this._connected !== c) {
+            this._connected = c;
+            this._renderValues();
+        }
     }
 
     setBatteryModel(v) {
         if (this._batteryModel !== v) {
             this._batteryModel = v;
-            this._el.querySelector('.info-model-value').textContent = v;
+            this._renderValues();
         }
     }
 
     setManufacturer(v) {
         if (this._manufacturer !== v) {
             this._manufacturer = v;
-            this._el.querySelector('.info-manufacturer-value').textContent = v;
+            this._renderValues();
         }
     }
 
@@ -2580,8 +2600,15 @@ class BatteryInfoBarWidget {
     setBatteryCode(v) {
         if (this._batteryCode !== v) {
             this._batteryCode = v;
-            this._el.querySelector('.info-code-value').textContent = v;
+            this._renderValues();
         }
+    }
+
+    _renderValues() {
+        this._el.classList.toggle('disconnected', !this._connected);
+        this._el.querySelector('.info-model-value').textContent = this._connected ? this._batteryModel : '--';
+        this._el.querySelector('.info-manufacturer-value').textContent = this._connected ? this._manufacturer : '--';
+        this._el.querySelector('.info-code-value').textContent = this._connected ? this._batteryCode : '--';
     }
 
     _updateFonts() {
@@ -2758,6 +2785,7 @@ class BatteryInfoBarWidget {
             batteryTemp.setConnected(c);
             abnormalRecord.setConnected(c);
             historicalLog.setConnected(c);
+            batteryInfo.setConnected(c);
         });
 
         dm.addEventListener('batteryHealthChanged', function(e) { healthBar.setValue(e.detail); });
@@ -2813,6 +2841,7 @@ class BatteryInfoBarWidget {
         batteryTemp.setConnected(false);
         abnormalRecord.setConnected(false);
         historicalLog.setConnected(false);
+        batteryInfo.setConnected(false);
 
         batteryInfo.setBatteryModel('--');
         batteryInfo.setBatteryCode('--');
