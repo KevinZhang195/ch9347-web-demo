@@ -926,12 +926,15 @@ const BrowserSupport = {
         const isFirefox = /Firefox\//.test(ua);
         const isSafari = /Safari\//.test(ua) && !/Chrome|Chromium|Edg\//.test(ua);
         const hasSerial = !!(navigator.serial);
+        const hasMIDI = !!(navigator.requestMIDIAccess);
         return {
             ua: ua,
             isLegacy: isLegacy,
             isFirefox: isFirefox,
             isSafari: isSafari,
             hasSerial: hasSerial,
+            hasMIDI: hasMIDI,
+            hasDeviceAccess: hasSerial || hasMIDI,
             isSecure: window.isSecureContext !== false
         };
     },
@@ -940,7 +943,7 @@ const BrowserSupport = {
         if (info.isLegacy) return '当前浏览器内核过旧，请使用 Chrome、Microsoft Edge Chromium 或 360 浏览器极速模式。';
         if (info.isFirefox || info.isSafari) return '当前浏览器可预览页面，但不支持 CH9347 设备连接。请使用 Chrome、Microsoft Edge Chromium 或 360 浏览器极速模式连接设备。';
         if (!info.isSecure) return '当前页面不是安全上下文，浏览器可能禁止设备访问。请使用 HTTPS 或 localhost 打开页面。';
-        if (!info.hasSerial) return '当前浏览器未开放设备连接能力。请使用 Chrome、Microsoft Edge Chromium 或 360 浏览器极速模式。';
+        if (!info.hasDeviceAccess) return '当前浏览器未开放设备连接能力。请使用 Chrome、Microsoft Edge Chromium 或 360 浏览器极速模式，并允许 MIDI/音频类设备访问。';
         return '';
     },
     showBanner: function(message) {
