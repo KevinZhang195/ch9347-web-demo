@@ -176,3 +176,24 @@ git commit -m "style: 改造为深色科技感主题，匹配效果图
 - **语义色**：绿 `#00E676`（健康/正常），橙 `#FF9800`（警告），红 `#FF5252`（危险）
 - **字体**：白色 + 灰色透明度文字层级
 - **光效**：卡片顶部蓝色光晕线，卡片外发光阴影
+
+## 📁 资源文件管理规范 (2026-05-26)
+
+所有图片资源统一存放在 `Demo/assets/` 目录下，按文件性质分类：
+
+```
+Demo/assets/
+├── logo/          # 品牌 LOGO 图片（logo_final_1.png, _2.png, _3.png）
+├── icons/         # UI 图标
+├── bg/            # 背景图片
+└── other/         # 其他资源
+```
+
+**引用方式**：HTML 中通过相对路径引用，如 `src="assets/logo/logo_final_1.png"`
+
+**LOGO 文件说明**：
+- `logo_final_1.png` — 中英组合（传应 + TRUSVOLT），白字透明底，81KB
+- `logo_final_2.png` — 纯中文"传应"，白字透明底，69KB
+- `logo_final_3.png` — 纯英文"TRUSVOLT"，白字透明底，76KB
+
+**注意**：后续添加图片资源时，先判断分类后放入对应的 assets 子目录，不要直接放在 Demo 根目录。
