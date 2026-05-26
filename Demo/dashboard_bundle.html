@@ -2286,7 +2286,7 @@ class CycleCountWidget {
         this._connected = false;
 
         this._ro = observeResize(this._body, () => this._updateFonts());
-        this._renderValue();
+        this.setConnected(false);
     }
 
     setValue(v) {
@@ -2297,11 +2297,9 @@ class CycleCountWidget {
     }
 
     setConnected(c) {
-        if (this._connected !== c) {
-            this._connected = c;
-            this._card.classList.toggle('disconnected', !c);
-            this._renderValue();
-        }
+        this._connected = c;
+        this._card.classList.toggle('disconnected', !c);
+        this._renderValue();
     }
 
     _renderValue() {
@@ -2332,7 +2330,7 @@ class BatteryTempWidget {
         this._connected = false;
 
         this._ro = observeResize(this._card, () => this._updateFonts());
-        this._renderValue();
+        this.setConnected(false);
     }
 
     setValue(v) {
@@ -2343,11 +2341,9 @@ class BatteryTempWidget {
     }
 
     setConnected(c) {
-        if (this._connected !== c) {
-            this._connected = c;
-            this._card.classList.toggle('disconnected', !c);
-            this._renderValue();
-        }
+        this._connected = c;
+        this._card.classList.toggle('disconnected', !c);
+        this._renderValue();
     }
 
     _renderValue() {
