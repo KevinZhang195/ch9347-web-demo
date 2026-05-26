@@ -11,11 +11,22 @@
    ============================================================================ */
 
 :root {
-    --gold-top: #F5C518;
-    --gold-bottom: #E8960A;
-    --gold-text: #E6A817;
-    --bg-gray: #EAECEF;
-    --disconnected-light: #B0B0B0;
+    --bg-dark: #0A0E1A;
+    --card-bg: #141A2E;
+    --card-border: rgba(0, 180, 255, 0.15);
+    --card-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    --accent-blue: #00B4FF;
+    --accent-cyan: #00E5FF;
+    --accent-green: #00E676;
+    --accent-orange: #FF9800;
+    --accent-red: #FF5252;
+    --text-primary: #FFFFFF;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-dim: rgba(255, 255, 255, 0.4);
+    --glow-blue: 0 0 20px rgba(0, 180, 255, 0.3);
+    --glow-green: 0 0 20px rgba(0, 230, 118, 0.3);
+    --header-gradient: linear-gradient(135deg, #0A0E1A 0%, #141A2E 50%, #0A0E1A 100%);
+    --disconnected-light: rgba(255, 255, 255, 0.35);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -24,7 +35,8 @@ html, body {
     width: 100%; height: 100%;
     overflow: hidden;
     font-family: "PingFang SC", "Microsoft YaHei", "Arial", sans-serif;
-    background: var(--bg-gray);
+    background: var(--bg-dark);
+    color: var(--text-primary);
 }
 
 /* ── 主容器 ──────────────────────────────────── */
@@ -40,7 +52,8 @@ html, body {
     align-items: center;
     flex-shrink: 0;
     padding: 12px 28px;
-    background: linear-gradient(90deg, var(--gold-bottom), var(--gold-top), var(--gold-bottom));
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--card-border);
 }
 
 #logo-area {
@@ -92,7 +105,8 @@ html, body {
 #content-area {
     flex: 1 1 0;
     display: flex; flex-direction: column;
-    padding: 16px 16px 12px 32px;
+    background: var(--bg-dark);
+    padding: 20px 20px 16px 32px;
     gap: 16px;
     min-height: 0;
     min-width: 0;
@@ -193,6 +207,8 @@ html, body {
     display: flex; align-items: center;
     padding: 12px 28px 16px 28px;
     height: 110px;
+    background: var(--bg-dark);
+    border-top: 1px solid var(--card-border);
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -201,25 +217,36 @@ html, body {
 /* ═══════════════════════════════════════════════════════════════ */
 .widget-card {
     width: 100%; height: 100%;
-    background: #FFFFFF;
-    border-radius: 12px;
-    border: 1px solid rgba(220,220,220,0.63);
-    box-shadow:
-        0 3px 3px   1px rgba(0,0,0,0.217),
-        0 3px 4px   2px rgba(0,0,0,0.199),
-        0 3px 6px   3px rgba(0,0,0,0.181),
-        0 3px 8px   4px rgba(0,0,0,0.163),
-        0 3px 10px  5px rgba(0,0,0,0.145),
-        0 3px 12px  6px rgba(0,0,0,0.127),
-        0 3px 14px  7px rgba(0,0,0,0.109),
-        0 3px 16px  8px rgba(0,0,0,0.091),
-        0 3px 18px  9px rgba(0,0,0,0.072),
-        0 3px 20px 10px rgba(0,0,0,0.054),
-        0 3px 22px 11px rgba(0,0,0,0.036),
-        0 3px 25px 12px rgba(0,0,0,0.018);
-    display: flex; flex-direction: column;
-    overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     position: relative;
+    overflow: hidden;
+}
+
+.widget-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+    opacity: 0.6;
+}
+
+.widget-card .card-title {
+    width: 100%;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: bold;
+    flex-shrink: 0;
 }
 
 /* 卡片内容区裁剪，但不裁剪阴影（shadow 在 overflow:hidden 之外渲染） */
@@ -251,7 +278,7 @@ html, body {
 }
 #cycle-count .cycle-value,
 #cycle-count .cycle-unit {
-    font-weight: bold; color: #FFB300;
+    font-weight: bold; color: #FFFFFF;
 }
 #cycle-count.disconnected .cycle-value,
 #cycle-count.disconnected .cycle-unit { color: var(--disconnected-light); }
@@ -273,7 +300,7 @@ html, body {
 #battery-temp.disconnected .temp-icon { opacity: 0.4; }
 
 #battery-temp .temp-value {
-    font-weight: bold; color: var(--gold-text);
+    font-weight: bold; color: var(--text-primary);
 }
 #battery-temp.disconnected .temp-value { color: var(--disconnected-light); }
 
@@ -288,7 +315,7 @@ html, body {
 
 #abnormal-record .abnormal-header {
     display: flex;
-    color: #555;
+    color: rgba(255,255,255,0.4);
     flex-shrink: 0;
     padding: 4px 0;
 }
@@ -307,7 +334,9 @@ html, body {
 #abnormal-record .abnormal-row {
     flex: 1 1 0;
     display: flex; align-items: center;
+    background: rgba(255,255,255,0.03);
     border-radius: 6px;
+    padding: 4px 0;
     color: #FFF;
     min-height: 0;
 }
@@ -413,22 +442,10 @@ html, body {
 #battery-info {
     display: flex;
     width: 100%; height: 100%;
-    background: #FFFFFF;
-    border-radius: 10px;
-    border: 1px solid rgba(220,220,220,0.63);
-    box-shadow:
-        0 3px 3px   1px rgba(0,0,0,0.217),
-        0 3px 4px   2px rgba(0,0,0,0.199),
-        0 3px 6px   3px rgba(0,0,0,0.181),
-        0 3px 8px   4px rgba(0,0,0,0.163),
-        0 3px 10px  5px rgba(0,0,0,0.145),
-        0 3px 12px  6px rgba(0,0,0,0.127),
-        0 3px 14px  7px rgba(0,0,0,0.109),
-        0 3px 16px  8px rgba(0,0,0,0.091),
-        0 3px 18px  9px rgba(0,0,0,0.072),
-        0 3px 20px 10px rgba(0,0,0,0.054),
-        0 3px 22px 11px rgba(0,0,0,0.036),
-        0 3px 25px 12px rgba(0,0,0,0.018);
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
     overflow: hidden;
 }
 
@@ -438,17 +455,17 @@ html, body {
     align-items: center; justify-content: center;
     gap: 4px;
 }
-.info-column:not(:last-child) { border-right: 1px solid rgba(220,220,220,0.55); }
+.info-column:not(:last-child) { border-right: 1px solid var(--card-border); }
 
 .info-label {
-    font-weight: bold; color: #1A1A1A;
+    font-weight: bold; color: var(--text-secondary);
 }
 .info-underline {
     width: 40%; height: 2px;
-    background: var(--gold-text);
+    background: var(--accent-blue);
 }
 .info-model-value, .info-manufacturer-value, .info-code-value {
-    font-weight: bold; color: var(--gold-text);
+    font-weight: bold; color: var(--text-primary);
     text-align: center; word-break: break-all;
 }
 
@@ -569,7 +586,7 @@ html, body {
     }
     .info-column:not(:last-child) {
         border-right: none;
-        border-bottom: 1px solid rgba(220,220,220,0.55);
+        border-bottom: 1px solid var(--card-border);
     }
 
     /* ── 日志面板：全宽覆盖 ── */
@@ -1646,65 +1663,85 @@ class CircularProgressBar {
         const ctx = this._ctx;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        const c = this._connected;
-
-        // 圆弧几何 — 居中，尽量大
-        const side = Math.min(W * 0.88, H * 0.88);
+        const connected = this._connected;
+        const side = Math.min(W * 0.84, H * 0.84);
         const cx = W / 2, cy = H / 2;
-        const penW = side * 0.10;
+        const penW = Math.max(8, side * 0.11);
         const radius = (side - penW) / 2;
+        const ratio = Math.max(0, Math.min(1, this._value / 100));
+        const start = -Math.PI / 2;
+        const end = start + Math.PI * 2 * ratio;
 
-        // 背景环
+        const halo = ctx.createRadialGradient(cx, cy, radius * 0.35, cx, cy, radius + penW);
+        halo.addColorStop(0, connected ? 'rgba(0,229,255,0.08)' : 'rgba(255,255,255,0.03)');
+        halo.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius + penW * 1.7, 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = c ? '#DCDCDC' : '#C8C8C8';
+        ctx.strokeStyle = connected ? 'rgba(0,180,255,0.16)' : 'rgba(255,255,255,0.10)';
         ctx.lineWidth = penW;
         ctx.lineCap = 'round';
         ctx.stroke();
 
-        if (this._value > 0) {
-            const c0 = c ? { r: 153, g: 116, b: 4 } : { r: 200, g: 200, b: 200 };
-            const c1 = c ? { r: 255, g: 193, b: 7 } : { r: 176, g: 176, b: 176 };
-            const totalDeg = this._value * 3.6;
-            const segs = Math.max(1, Math.round(totalDeg));
-            const dps = totalDeg / segs;
-
-            for (let i = 0; i < segs; i++) {
-                const t = (i + 0.5) / segs;
-                const rr = Math.round(c0.r + (c1.r - c0.r) * t);
-                const gg = Math.round(c0.g + (c1.g - c0.g) * t);
-                const bb = Math.round(c0.b + (c1.b - c0.b) * t);
-                const a0 = (-90 + i * dps) * Math.PI / 180;
-                const a1 = (-90 + (i + 1) * dps) * Math.PI / 180;
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius, a0, a1);
-                ctx.strokeStyle = `rgb(${rr},${gg},${bb})`;
-                ctx.lineWidth = penW;
-                ctx.lineCap = 'butt';
-                ctx.stroke();
-            }
-
-            // 端点
-            const dotR = penW / 2;
-            const sa = -90 * Math.PI / 180;
-            const ea = (-90 + totalDeg) * Math.PI / 180;
-            ctx.beginPath();
-            ctx.arc(cx + radius * Math.cos(sa), cy + radius * Math.sin(sa), dotR, 0, Math.PI * 2);
-            ctx.fillStyle = `rgb(${c0.r},${c0.g},${c0.b})`;
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(cx + radius * Math.cos(ea), cy + radius * Math.sin(ea), dotR, 0, Math.PI * 2);
-            ctx.fillStyle = `rgb(${c1.r},${c1.g},${c1.b})`;
-            ctx.fill();
+        ctx.save();
+        ctx.shadowBlur = connected ? 18 : 0;
+        ctx.shadowColor = connected ? '#00E5FF' : 'transparent';
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, start, end);
+        const ringGrad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
+        if (connected) {
+            ringGrad.addColorStop(0, '#00B4FF');
+            ringGrad.addColorStop(0.55, '#00E5FF');
+            ringGrad.addColorStop(1, '#00E676');
+        } else {
+            ringGrad.addColorStop(0, 'rgba(255,255,255,0.22)');
+            ringGrad.addColorStop(1, 'rgba(255,255,255,0.10)');
         }
+        ctx.strokeStyle = ringGrad;
+        ctx.lineWidth = penW;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
 
-        // 百分比文字
-        const fs = Math.max(10, Math.floor(side * 0.14));
-        ctx.font = `bold ${fs}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-        ctx.fillStyle = c ? '#1E1E1E' : '#B0B0B0';
+        const tickCount = 48;
+        ctx.strokeStyle = connected ? 'rgba(0,229,255,0.28)' : 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = Math.max(1, penW * 0.12);
+        for (let i = 0; i < tickCount; i++) {
+            const a = start + i * Math.PI * 2 / tickCount;
+            const tickRatio = i / tickCount;
+            ctx.globalAlpha = tickRatio <= ratio ? 0.95 : 0.28;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(a) * (radius - penW * 0.72), cy + Math.sin(a) * (radius - penW * 0.72));
+            ctx.lineTo(cx + Math.cos(a) * (radius - penW * 0.42), cy + Math.sin(a) * (radius - penW * 0.42));
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        const dotA = ratio > 0 ? end : start;
+        ctx.save();
+        ctx.shadowBlur = connected ? 16 : 0;
+        ctx.shadowColor = connected ? '#00E676' : 'transparent';
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(dotA) * radius, cy + Math.sin(dotA) * radius, penW * 0.36, 0, Math.PI * 2);
+        ctx.fillStyle = connected ? '#D8FFF0' : 'rgba(255,255,255,0.35)';
+        ctx.fill();
+        ctx.restore();
+
+        const fs = Math.max(12, Math.floor(side * 0.18));
+        ctx.font = `800 ${fs}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+        ctx.fillStyle = connected ? '#FFFFFF' : 'rgba(255,255,255,0.38)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this._value + '%', cx, cy);
+        ctx.fillText(this._value + '%', cx, cy - fs * 0.12);
+
+        const labelFS = Math.max(8, Math.floor(side * 0.055));
+        ctx.font = `${labelFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+        ctx.fillStyle = connected ? 'rgba(0,229,255,0.72)' : 'rgba(255,255,255,0.25)';
+        ctx.fillText('HEALTH', cx, cy + fs * 0.62);
     }
 }
 
@@ -1737,10 +1774,10 @@ class BatteryWidget {
     }
 
     _colors(v) {
-        if (!this._connected) return { main: '#B0B0B0', dark: '#C8C8C8' };
-        if (v > 75) return { main: '#4CAF50', dark: '#388E3C' };
-        if (v >= 20) return { main: '#F5C518', dark: '#E8960A' };
-        return { main: '#E53935', dark: '#C62828' };
+        if (!this._connected) return { fill: '#B0B0B0', text: '#FFFFFF', outline: '#C8C8C8' };
+        if (v < 10) return { fill: '#E53935', text: '#FFFFFF', outline: '#C8C8C8' };
+        if (v < 20) return { fill: '#FB8C00', text: '#FFFFFF', outline: '#C8C8C8' };
+        return { fill: '#4CAF50', text: '#FFFFFF', outline: '#C8C8C8' };
     }
 
     _render() {
@@ -1757,75 +1794,93 @@ class BatteryWidget {
 
         const cols = this._colors(this._value);
         const cx = W / 2, cy = H / 2;
+        const iconW = Math.min(W * 0.70, H * 1.22);
+        const iconH = iconW * 0.46;
+        const iconX = cx - iconW / 2;
+        const iconY = cy - iconH * 0.68;
 
-        // 文字大小
-        const textFS = Math.max(10, Math.floor(H * 0.48));
-        ctx.font = `bold ${textFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-        const pctText = this._value + '%';
-        const pctW = ctx.measureText(pctText).width;
+        this._drawBattery(ctx, iconX, iconY, iconW, cols);
 
-        // 电池图标尺寸
-        const iconSide = H * 0.52;
-        const gap = H * 0.04;
-        const totalW = pctW + gap + iconSide;
-        const startX = cx - totalW / 2;
-        const iconX = startX + pctW + gap;
-        const iconY = cy - iconSide / 2;
-
-        // 百分比文字
-        ctx.fillStyle = cols.main;
-        ctx.textAlign = 'left';
+        const pctFS = Math.max(14, Math.floor(Math.min(W, H) * 0.16));
+        ctx.font = `800 ${pctFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+        ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(pctText, startX, cy);
+        ctx.fillStyle = this._connected ? '#FFFFFF' : 'rgba(255,255,255,0.38)';
+        ctx.fillText(this._value + '%', cx, iconY + iconH + pctFS * 0.95);
 
-        // 电池图标
-        this._drawBattery(ctx, iconX, iconY, iconSide, cols);
+        const labelFS = Math.max(8, Math.floor(pctFS * 0.38));
+        ctx.font = `${labelFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+        ctx.fillStyle = this._connected ? 'rgba(0,229,255,0.68)' : 'rgba(255,255,255,0.24)';
+        ctx.fillText('BATTERY', cx, iconY + iconH + pctFS * 1.55);
     }
 
     _drawBattery(ctx, x, y, side, cols) {
-        const bodyW = side * 0.58;
-        const bodyH = side * 0.82;
-        const capH = side * 0.06;
-        const strokeW = bodyW * 0.09;
-        const bodyX = x + (side - bodyW) / 2;
-        const bodyY = y + capH;
-        const bodyR = bodyW * 0.10;
+        const w = side;
+        const h = side * 0.46;
+        const valueRatio = Math.max(0, Math.min(1, this._value / 100));
+        const connected = this._connected;
+        const radius = h * 0.18;
+        const capW = w * 0.075;
+        const capH = h * 0.46;
+        const bodyW = w - capW - h * 0.10;
+        const bodyX = x;
+        const bodyY = y;
+        const capX = bodyX + bodyW + h * 0.035;
+        const capY = bodyY + (h - capH) / 2;
+        const inset = Math.max(3, h * 0.12);
+        const fillW = Math.max(0, (bodyW - inset * 2) * valueRatio);
 
-        // 正极帽
-        const capW = bodyW * 0.36;
-        const capR = capW * 0.25;
+        ctx.save();
+        ctx.shadowBlur = connected ? 16 : 0;
+        ctx.shadowColor = connected ? cols.fill : 'transparent';
         ctx.beginPath();
-        ctx.roundRect(x + (side - capW) / 2, y, capW, capH + 1, capR);
-        ctx.fillStyle = cols.main;
+        ctx.roundRect(bodyX, bodyY, bodyW, h, radius);
+        ctx.strokeStyle = connected ? 'rgba(0,229,255,0.72)' : 'rgba(255,255,255,0.24)';
+        ctx.lineWidth = Math.max(2, h * 0.08);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.roundRect(capX, capY, capW, capH, capW * 0.35);
+        ctx.fillStyle = connected ? 'rgba(0,229,255,0.72)' : 'rgba(255,255,255,0.24)';
         ctx.fill();
 
-        // 外壳
+        ctx.save();
         ctx.beginPath();
-        ctx.roundRect(bodyX, bodyY, bodyW, bodyH, bodyR);
-        ctx.strokeStyle = cols.main;
-        ctx.lineWidth = strokeW;
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-
-        // 内部填充
-        const inset = strokeW * 0.8;
-        const fillW = bodyW - 2 * inset;
-        const fillBot = bodyY + bodyH - inset;
-        const fillH = (bodyH - 2 * inset) * (this._value / 100);
-        const fillY = fillBot - fillH;
-        const fillR = bodyR * 0.6;
-
-        if (fillH > 0.5) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.roundRect(bodyX + inset, bodyY + inset, fillW, bodyH - 2 * inset, fillR);
-            ctx.clip();
-            const grad = ctx.createLinearGradient(0, fillY, 0, fillBot);
-            grad.addColorStop(0, cols.dark);
-            grad.addColorStop(1, cols.main);
+        ctx.roundRect(bodyX + inset, bodyY + inset, bodyW - inset * 2, h - inset * 2, radius * 0.55);
+        ctx.clip();
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(bodyX + inset, bodyY + inset, bodyW - inset * 2, h - inset * 2);
+        if (fillW > 0.5) {
+            const grad = ctx.createLinearGradient(bodyX + inset, 0, bodyX + inset + bodyW, 0);
+            grad.addColorStop(0, connected ? cols.fill : 'rgba(255,255,255,0.18)');
+            grad.addColorStop(0.55, connected ? cols.fill : 'rgba(255,255,255,0.28)');
+            grad.addColorStop(1, connected ? '#00E5FF' : 'rgba(255,255,255,0.18)');
             ctx.fillStyle = grad;
-            ctx.fillRect(bodyX + inset, fillY, fillW, fillBot - fillY);
-            ctx.restore();
+            ctx.fillRect(bodyX + inset, bodyY + inset, fillW, h - inset * 2);
+        }
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.moveTo(bodyX + bodyW * 0.10, bodyY + h * 0.22);
+        ctx.lineTo(bodyX + bodyW * 0.35, bodyY + h * 0.22);
+        ctx.lineTo(bodyX + bodyW * 0.24, bodyY + h * 0.46);
+        ctx.lineTo(bodyX + bodyW * 0.50, bodyY + h * 0.46);
+        ctx.lineTo(bodyX + bodyW * 0.18, bodyY + h * 0.82);
+        ctx.lineTo(bodyX + bodyW * 0.29, bodyY + h * 0.56);
+        ctx.lineTo(bodyX + bodyW * 0.08, bodyY + h * 0.56);
+        ctx.closePath();
+        ctx.fillStyle = connected ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.22)';
+        ctx.fill();
+
+        ctx.strokeStyle = connected ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < 4; i++) {
+            const sx = bodyX + inset + (bodyW - inset * 2) * i / 4;
+            ctx.beginPath();
+            ctx.moveTo(sx, bodyY + inset * 1.25);
+            ctx.lineTo(sx, bodyY + h - inset * 1.25);
+            ctx.stroke();
         }
     }
 }
@@ -1873,108 +1928,104 @@ class GaugeWidget {
         const ctx = this._ctx;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        const conn = this._connected;
+        const connected = this._connected;
+        const ratio = (this._value - this._min) / (this._max - this._min);
+        const clamped = Math.max(0, Math.min(1, ratio));
+        const cx = W / 2;
+        const radius = Math.min(W * 0.42, H * 0.58);
+        const cy = H * 0.66;
+        const start = Math.PI * 1.25;
+        const end = Math.PI * 2.75;
+        const sweep = end - start;
+        const arcW = Math.max(8, radius * 0.13);
 
-        // 中心与半径
-        const centerX = W / 2;
-        const arcTop = H * 0.02;
-        const arcH = H * 0.72;
-        const radius = Math.min(W * 0.46, arcH / 1.12);
-        const arcW = radius * 0.22;
-        const centerY = arcTop + radius + arcW * 0.4;
+        const glow = ctx.createRadialGradient(cx, cy, radius * 0.16, cx, cy, radius * 1.2);
+        glow.addColorStop(0, connected ? 'rgba(0,180,255,0.10)' : 'rgba(255,255,255,0.03)');
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, W, H);
 
-        // 背景弧（顺时针从左到右，走顶部半圆）
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, Math.PI, 0);
-        ctx.strokeStyle = '#DEDEDE';
+        ctx.arc(cx, cy, radius, start, end);
+        ctx.strokeStyle = connected ? 'rgba(0,180,255,0.15)' : 'rgba(255,255,255,0.10)';
         ctx.lineWidth = arcW;
-        ctx.lineCap = 'butt';
         ctx.stroke();
 
-        // 前景弧（顺时针从左侧填充到右侧，走顶部半圆）
-        const ratio = (this._value - this._min) / (this._max - this._min);
-        if (ratio > 0.001) {
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, Math.PI, Math.PI + Math.PI * ratio);
-            ctx.strokeStyle = conn ? '#F5C518' : '#C0C0C0';
-            ctx.lineWidth = arcW;
-            ctx.lineCap = 'butt';
-            ctx.stroke();
-        }
-
-        // 刻度线
-        const tickN = 10;
-        const tickLen = arcW * 0.50;
-        const tickW = Math.max(1.5, radius * 0.015);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = tickW;
-        ctx.lineCap = 'butt';
-        for (let i = 0; i <= tickN; i++) {
-            const ang = Math.PI - (Math.PI * i) / tickN;
-            const cs = Math.cos(ang), sn = Math.sin(ang);
-            ctx.beginPath();
-            ctx.moveTo(centerX + (radius - tickLen * 0.3) * cs, centerY - (radius - tickLen * 0.3) * sn);
-            ctx.lineTo(centerX + (radius + tickLen * 0.7) * cs, centerY - (radius + tickLen * 0.7) * sn);
-            ctx.stroke();
-        }
-
-        // 指针（与 C++ 一致: rotateAngle = -90 + ratio * 180）
-        const ptrAngle = (-90 + ratio * 180) * Math.PI / 180;
-        const pLen = radius * 0.78;
-        const pW = radius * 0.055;
         ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(ptrAngle);
-
-        // 阴影
-        const so = Math.max(1, radius * 0.02);
+        ctx.shadowBlur = connected ? 18 : 0;
+        ctx.shadowColor = connected ? '#00B4FF' : 'transparent';
         ctx.beginPath();
-        ctx.moveTo(0, 0); ctx.lineTo(-pW + so, so); ctx.lineTo(so, -pLen + so); ctx.lineTo(pW + so, so);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.fill();
-
-        // 指针体
-        ctx.beginPath();
-        ctx.moveTo(0, 0); ctx.lineTo(-pW, 0); ctx.lineTo(0, -pLen); ctx.lineTo(pW, 0);
-        ctx.closePath();
-        if (conn) {
-            const g = ctx.createLinearGradient(0, 0, 0, -pLen);
-            g.addColorStop(0, '#F5A623'); g.addColorStop(1, '#E8960A');
-            ctx.fillStyle = g;
+        ctx.arc(cx, cy, radius, start, start + sweep * clamped);
+        const grad = ctx.createLinearGradient(cx - radius, cy, cx + radius, cy);
+        if (connected) {
+            grad.addColorStop(0, '#00B4FF');
+            grad.addColorStop(0.55, '#00E5FF');
+            grad.addColorStop(1, '#00E676');
         } else {
-            ctx.fillStyle = '#C0C0C0';
+            grad.addColorStop(0, 'rgba(255,255,255,0.18)');
+            grad.addColorStop(1, 'rgba(255,255,255,0.28)');
         }
-        ctx.fill();
-
-        // 中心点
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.075, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fill();
-        ctx.strokeStyle = '#CCCCCC';
-        ctx.lineWidth = Math.max(0.5, radius * 0.01);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = arcW;
         ctx.stroke();
         ctx.restore();
 
-        // 当前值
-        const valFS = Math.max(10, Math.floor(radius * 0.24));
-        ctx.font = `bold ${valFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-        ctx.fillStyle = conn ? '#222222' : '#B0B0B0';
+        const majorTicks = 10;
+        for (let i = 0; i <= majorTicks; i++) {
+            const a = start + sweep * i / majorTicks;
+            const isMajor = i % 2 === 0;
+            const inner = radius - arcW * (isMajor ? 1.15 : 0.85);
+            const outer = radius + arcW * 0.42;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+            ctx.lineTo(cx + Math.cos(a) * outer, cy + Math.sin(a) * outer);
+            ctx.strokeStyle = connected ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.22)';
+            ctx.lineWidth = isMajor ? 2 : 1;
+            ctx.stroke();
+        }
+
+        const needleA = start + sweep * clamped;
+        const nLen = radius * 0.74;
+        const nTail = radius * 0.12;
+        const nW = Math.max(4, radius * 0.035);
+        const tx = Math.cos(needleA), ty = Math.sin(needleA);
+        const px = -ty, py = tx;
+        ctx.save();
+        ctx.shadowBlur = connected ? 14 : 0;
+        ctx.shadowColor = connected ? '#00E5FF' : 'transparent';
+        ctx.beginPath();
+        ctx.moveTo(cx + tx * nLen, cy + ty * nLen);
+        ctx.lineTo(cx + px * nW - tx * nTail, cy + py * nW - ty * nTail);
+        ctx.lineTo(cx - px * nW - tx * nTail, cy - py * nW - ty * nTail);
+        ctx.closePath();
+        ctx.fillStyle = connected ? '#D8FFF0' : 'rgba(255,255,255,0.42)';
+        ctx.fill();
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.075, 0, Math.PI * 2);
+        ctx.fillStyle = connected ? '#00E5FF' : 'rgba(255,255,255,0.30)';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.04, 0, Math.PI * 2);
+        ctx.fillStyle = connected ? '#FFFFFF' : 'rgba(255,255,255,0.45)';
+        ctx.fill();
+
+        const valFS = Math.max(12, Math.floor(radius * 0.20));
+        ctx.font = `800 ${valFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const valY = arcTop + arcH + (H - arcTop - arcH) * 0.45;
-        ctx.fillText(this._value.toFixed(3) + this._unit, centerX, valY);
+        ctx.fillStyle = connected ? '#FFFFFF' : 'rgba(255,255,255,0.38)';
+        ctx.fillText(this._value.toFixed(1) + this._unit, cx, H * 0.83);
 
-        // 标签
-        const lblFS = Math.max(7, Math.floor(radius * 0.16));
-        ctx.font = `${lblFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-        ctx.fillStyle = conn ? '#444444' : '#B0B0B0';
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = 'right';
-        ctx.fillText(this._max.toFixed(1) + this._unit, centerX + radius + arcW * 0.3, centerY);
+        const labelFS = Math.max(8, Math.floor(radius * 0.10));
+        ctx.font = `${labelFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+        ctx.fillStyle = connected ? 'rgba(0,229,255,0.65)' : 'rgba(255,255,255,0.24)';
         ctx.textAlign = 'left';
-        ctx.fillText(this._min.toFixed(0) + this._unit, centerX - radius - arcW * 0.3, centerY);
+        ctx.fillText(this._min.toFixed(0), cx - radius, cy + arcW * 1.45);
+        ctx.textAlign = 'right';
+        ctx.fillText(this._max.toFixed(1), cx + radius, cy + arcW * 1.45);
     }
 }
 
@@ -2028,66 +2079,66 @@ class CellVoltageWidget {
         const ctx = this._ctx;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        const conn = this._connected;
+        const connected = this._connected;
         const n = this._cells.length;
-        // 布局比例与 C++ 一致: kBarRatio=0.55, kLabelRatio=0.14, kVoltRatio=0.13
-        const totalRatio = 0.55 + 0.14 + 0.13;
-        const pad = H * 0.02;
-        const barH = H * (0.55 / totalRatio);
-        const barTop = pad;
-        const labelH = H * (0.14 / totalRatio);
-        const voltH = H * (0.13 / totalRatio);
-        const cellW = W / n;
+        const padX = Math.max(10, W * 0.055);
+        const top = Math.max(8, H * 0.08);
+        const rowGap = Math.max(5, H * 0.025);
+        const rowH = Math.max(12, (H - top * 2 - rowGap * (n - 1)) / n);
+        const labelW = Math.max(34, W * 0.18);
+        const valueW = Math.max(42, W * 0.20);
+        const barX = padX + labelW;
+        const barW = Math.max(10, W - padX * 2 - labelW - valueW);
 
         for (let i = 0; i < n; i++) {
-            const cLeft = cellW * i;
-            const cMid = cLeft + cellW / 2;
-            const barW = cellW * 0.55;
-            const barX = cMid - barW / 2;
-            const barR = barW * 0.18;
+            const y = top + i * (rowH + rowGap);
             const cell = this._cells[i];
-            const fillRatio = cell.maxVoltage > 0 ? Math.max(0, Math.min(1, cell.voltage / cell.maxVoltage)) : 0;
+            const ratio = cell.maxVoltage > 0 ? Math.max(0, Math.min(1, cell.voltage / cell.maxVoltage)) : 0;
+            const barH = Math.max(7, rowH * 0.42);
+            const barY = y + (rowH - barH) / 2;
+            const r = barH / 2;
 
-            // 背景条
+            ctx.font = `600 ${Math.max(8, Math.floor(rowH * 0.38))}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = connected ? 'rgba(255,255,255,0.70)' : 'rgba(255,255,255,0.28)';
+            ctx.fillText('C' + String(i + 1).padStart(2, '0'), padX, y + rowH / 2);
+
             ctx.beginPath();
-            ctx.roundRect(barX, barTop, barW, barH, barR);
-            ctx.fillStyle = '#E0E0E0';
+            ctx.roundRect(barX, barY, barW, barH, r);
+            ctx.fillStyle = connected ? 'rgba(0,180,255,0.10)' : 'rgba(255,255,255,0.08)';
             ctx.fill();
 
-            // 填充
-            const fillH = barH * fillRatio;
-            if (fillH > 0.3) {
+            const fillW = barW * ratio;
+            if (fillW > 0.5) {
                 ctx.save();
                 ctx.beginPath();
-                ctx.roundRect(barX, barTop, barW, barH, barR);
+                ctx.roundRect(barX, barY, barW, barH, r);
                 ctx.clip();
-                const fillY = barTop + barH - fillH;
-                const grad = ctx.createLinearGradient(0, barTop, 0, barTop + barH);
-                if (conn) {
-                    grad.addColorStop(0, '#E8960A');
-                    grad.addColorStop(1, '#F5C518');
+                const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+                if (connected) {
+                    grad.addColorStop(0, '#00B4FF');
+                    grad.addColorStop(0.72, '#00E5FF');
+                    grad.addColorStop(1, '#00E676');
                 } else {
-                    grad.addColorStop(0, '#C8C8C8');
-                    grad.addColorStop(1, '#B0B0B0');
+                    grad.addColorStop(0, 'rgba(255,255,255,0.16)');
+                    grad.addColorStop(1, 'rgba(255,255,255,0.28)');
                 }
+                ctx.shadowBlur = connected ? 10 : 0;
+                ctx.shadowColor = connected ? '#00E5FF' : 'transparent';
                 ctx.fillStyle = grad;
-                ctx.fillRect(barX, fillY, barW, fillH);
+                ctx.fillRect(barX, barY, fillW, barH);
                 ctx.restore();
             }
 
-            // 电芯标签
-            const lblFS = Math.max(7, Math.floor(labelH * 0.55));
-            ctx.font = `${lblFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-            ctx.fillStyle = '#444444';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('电芯' + (i + 1), cMid, barTop + barH + labelH / 2);
+            ctx.strokeStyle = connected ? 'rgba(0,229,255,0.22)' : 'rgba(255,255,255,0.10)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
 
-            // 电压值
-            const voltFS = Math.max(7, Math.floor(voltH * 0.60));
-            ctx.font = `bold ${voltFS}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-            ctx.fillStyle = conn ? '#444444' : '#B0B0B0';
-            ctx.fillText(cell.voltage.toFixed(3) + 'V', cMid, barTop + barH + labelH + voltH / 2);
+            ctx.font = `700 ${Math.max(8, Math.floor(rowH * 0.38))}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.fillStyle = connected ? '#FFFFFF' : 'rgba(255,255,255,0.34)';
+            ctx.fillText(cell.voltage.toFixed(2) + 'V', W - padX, y + rowH / 2);
         }
     }
 }
