@@ -206,7 +206,8 @@ html, body {
     flex-shrink: 0;
     display: flex; align-items: center;
     padding: 12px 28px 16px 28px;
-    height: 110px;
+    min-height: 70px;
+    height: clamp(70px, 8vw, 110px);
     background: var(--bg-dark);
     border-top: 1px solid var(--card-border);
 }
@@ -459,6 +460,7 @@ html, body {
 
 .info-label {
     font-weight: bold; color: var(--text-secondary);
+    font-size: clamp(12px, 1.2vw, 15px);
 }
 .info-underline {
     width: 40%; height: 2px;
@@ -467,6 +469,7 @@ html, body {
 .info-model-value, .info-manufacturer-value, .info-code-value {
     font-weight: bold; color: var(--text-primary);
     text-align: center; word-break: break-all;
+    font-size: clamp(14px, 1.5vw, 18px);
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -493,7 +496,7 @@ html, body {
     #logo-area {
         width: auto; min-width: 0;
     }
-    #logo-area img { height: 52px; }
+    #logo-area img { height: clamp(37px, 5vw, 73px); }
 
     #model-label {
         flex: 1 1 100%;
@@ -624,7 +627,7 @@ html, body {
     #abnormal-record.widget-card { height: 160px; }
 
     #top-bar { padding: 6px 8px; }
-    #logo-area img { height: 37px; }
+    #logo-area img { height: clamp(37px, 5vw, 73px); }
     #model-label { font-size: 12px; }
     #conn-status { font-size: 11px; }
 
@@ -636,6 +639,20 @@ html, body {
     }
 }
 
+</style>
+<style>
+/* 最小窗口限制 */
+html { min-width: 480px; overflow-x: auto; }
+body { min-width: 480px; overflow-x: auto; }
+#min-window-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85); z-index: 99999;
+    justify-content: center; align-items: center; flex-direction: column;
+    color: #fff; font-family: sans-serif; text-align: center;
+}
+#min-window-overlay .icon { font-size: 48px; margin-bottom: 20px; }
+#min-window-overlay .msg { font-size: 18px; line-height: 1.6; padding: 0 20px; }
+#min-window-overlay .hint { font-size: 14px; color: #aaa; margin-top: 12px; }
 </style>
 </head>
 <body>
@@ -2709,5 +2726,20 @@ class BatteryInfoBarWidget {
         driver.start();
     });
     </script>
+<script>
+(function(){
+    var MIN_W = 480, MIN_H = 400;
+    var overlay = document.createElement('div');
+    overlay.id = 'min-window-overlay';
+    overlay.innerHTML = '<div class="icon">🪟</div><div class="msg">窗口太小，内容可能显示不完整<br>请放大浏览器窗口</div><div class="hint">推荐最小尺寸：480px × 400px</div>';
+    document.body.appendChild(overlay);
+    function checkSize(){
+        var w = window.innerWidth, h = window.innerHeight;
+        overlay.style.display = (w < MIN_W || h < MIN_H) ? 'flex' : 'none';
+    }
+    window.addEventListener('resize', checkSize);
+    checkSize();
+})();
+</script>
 </body>
 </html>
