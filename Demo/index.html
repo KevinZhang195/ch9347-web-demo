@@ -280,7 +280,10 @@ html, body {
     font-weight: bold; color: #FFB300;
 }
 #cycle-count.disconnected .cycle-value,
-#cycle-count.disconnected .cycle-unit { color: var(--disconnected-light); }
+#cycle-count.disconnected .cycle-unit {
+    color: #B0B0B0;
+    color: var(--disconnected-light);
+}
 
 /* ═══════════════════════════════════════════════════════════════ */
 /*  电池温度                                                        */
@@ -301,7 +304,10 @@ html, body {
 #battery-temp .temp-value {
     font-weight: bold; color: var(--gold-text);
 }
-#battery-temp.disconnected .temp-value { color: var(--disconnected-light); }
+#battery-temp.disconnected .temp-value {
+    color: #B0B0B0;
+    color: var(--disconnected-light);
+}
 
 /* ═══════════════════════════════════════════════════════════════ */
 /*  异常记录                                                        */
@@ -2280,17 +2286,26 @@ class CycleCountWidget {
         this._connected = false;
 
         this._ro = observeResize(this._body, () => this._updateFonts());
+        this._renderValue();
     }
 
     setValue(v) {
-        if (this._value !== v) { this._value = v; this._valueEl.textContent = v; }
+        if (this._value !== v) {
+            this._value = v;
+            this._renderValue();
+        }
     }
 
     setConnected(c) {
         if (this._connected !== c) {
             this._connected = c;
             this._card.classList.toggle('disconnected', !c);
+            this._renderValue();
         }
+    }
+
+    _renderValue() {
+        this._valueEl.textContent = this._connected ? this._value : '--';
     }
 
     _updateFonts() {
@@ -2317,12 +2332,13 @@ class BatteryTempWidget {
         this._connected = false;
 
         this._ro = observeResize(this._card, () => this._updateFonts());
+        this._renderValue();
     }
 
     setValue(v) {
         if (Math.abs(this._value - v) > 1e-9) {
             this._value = v;
-            this._valueEl.textContent = v.toFixed(1) + '°C';
+            this._renderValue();
         }
     }
 
@@ -2330,7 +2346,12 @@ class BatteryTempWidget {
         if (this._connected !== c) {
             this._connected = c;
             this._card.classList.toggle('disconnected', !c);
+            this._renderValue();
         }
+    }
+
+    _renderValue() {
+        this._valueEl.textContent = this._connected ? this._value.toFixed(1) + '°C' : '--';
     }
 
     _updateFonts() {
