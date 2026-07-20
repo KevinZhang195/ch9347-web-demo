@@ -387,7 +387,7 @@
   <!-- 实时数据 -->
   <div class="live-card">
     <div class="live-row">
-      <div class="live-cell"><div class="k">总电压</div><div class="v"><span id="v-pack">24.6</span><span class="u">V</span></div></div>
+      <div class="live-cell"><div class="k">总电压</div><div class="v"><span id="v-pack">24.60</span><span class="u">V</span></div></div>
       <div class="live-cell"><div class="k">当前电流</div><div class="v"><span id="i-pack">1.20</span><span class="u">A</span></div></div>
       <div class="live-cell"><div class="k">当前功率</div><div class="v"><span id="p-pack">29.5</span><span class="u">W</span></div></div>
     </div>
@@ -1450,7 +1450,7 @@ const hero = $('hero-card');
   /* 其余 */
   $('temp-num').textContent = scn.temp;
   $('cycle-num').textContent = scn.cycle;
-  $('v-pack').textContent = scn.vPack.toFixed(1);
+  $('v-pack').textContent = scn.vPack.toFixed(2);
   $('i-pack').textContent = scn.iPack.toFixed(2);
   $('p-pack').textContent = scn.pPack.toFixed(1);
 

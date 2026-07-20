@@ -362,7 +362,7 @@
             <svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           </span>
         </div>
-        <div class="stat-value"><span id="v-pack">24.6</span><span class="u">V</span></div>
+        <div class="stat-value"><span id="v-pack">24.60</span><span class="u">V</span></div>
         <div class="stat-desc">电池组两端电压</div>
       </div>
 
@@ -627,7 +627,7 @@ function render(name){
   /* 温度：无分色，仅显示 */
   $('temp-num').textContent = scn.temp;
   $('cycle-num').textContent = scn.cycle;
-  $('v-pack').textContent = scn.vPack.toFixed(1);
+  $('v-pack').textContent = scn.vPack.toFixed(2);
   $('i-pack').textContent = scn.iPack.toFixed(2);
   $('p-pack').textContent = scn.pPack.toFixed(1);
 

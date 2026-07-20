@@ -428,7 +428,7 @@
         <div class="stat-head"><span class="stat-label">总电压</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         </div>
-        <div class="stat-val"><span id="v-pack">24.6</span><span class="u">V</span></div>
+        <div class="stat-val"><span id="v-pack">24.60</span><span class="u">V</span></div>
         <div class="stat-desc">电池组两端电压</div>
       </div>
       <div class="stat-card">
@@ -1521,7 +1521,7 @@ document.body.classList.toggle('disconnected', !scn.connected);
   /* 其余 */
   $('temp-num').textContent = scn.temp;
   $('cycle-num').textContent = scn.cycle;
-  $('v-pack').textContent = scn.vPack.toFixed(1);
+  $('v-pack').textContent = scn.vPack.toFixed(2);
   $('i-pack').textContent = scn.iPack.toFixed(2);
   $('p-pack').textContent = scn.pPack.toFixed(1);
 
