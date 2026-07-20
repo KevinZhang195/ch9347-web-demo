@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH9347 Dashboard · 3 套 UI 方案预览</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #F5F5F7;
+    color: #1D1D1F;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .sub { color: #6E6E73; font-size: 15px; margin-bottom: 32px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 20px rgba(0,0,0,0.04);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 16px 32px rgba(0,0,0,0.08); }
+
+  .thumb {
+    height: 180px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; letter-spacing: 0.05em;
+    position: relative;
+  }
+  .thumb-A { background: linear-gradient(135deg, #F5F5F7, #E5E5EA); color: #1D1D1F; }
+  .thumb-B { background: linear-gradient(135deg, #0A0E14, #1C222D); color: #4DA8FF; }
+  .thumb-C { background: linear-gradient(135deg, #E8F5E9, #FFF3E0); color: #2E7D32; }
+
+  .thumb-A::before, .thumb-B::before, .thumb-C::before { content:''; position:absolute; inset:auto; }
+
+  /* 缩略示意图 */
+  .thumb .demo-ring {
+    width: 80px; height: 80px; border-radius: 50%;
+    border: 8px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 600;
+    opacity: 0.85;
+  }
+  .thumb-B .demo-ring { box-shadow: 0 0 30px rgba(77,168,255,0.5); }
+
+  .thumb .demo-c-hero {
+    width: 74%; padding: 12px 14px; border-radius: 14px;
+    background: rgba(46,125,50,0.15);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .thumb-C .battery-icon {
+    width: 40px; height: 26px; border: 2.5px solid currentColor; border-radius: 5px;
+    padding: 2px; position: relative;
+  }
+  .thumb-C .battery-icon::after {
+    content:''; position: absolute; right: -5px; top: 8px; width: 3px; height: 8px; background: currentColor; border-radius: 0 2px 2px 0;
+  }
+  .thumb-C .battery-icon > div { height: 100%; width: 87%; background: currentColor; border-radius: 2px; }
+
+  .thumb .demo-c-text { display: flex; flex-direction: column; }
+  .thumb .demo-c-text .p { font-size: 22px; font-weight: 700; line-height: 1; }
+  .thumb .demo-c-text .m { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+
+  .body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .name { font-size: 17px; font-weight: 600; }
+  .tag { display: inline-block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #6E6E73; }
+  .desc { font-size: 14px; color: #3A3A3C; line-height: 1.5; }
+
+  .meta { display: flex; gap: 14px; margin-top: 6px; font-size: 12px; color: #6E6E73; }
+  .meta span strong { color: #1D1D1F; font-weight: 500; }
+
+  .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .actions a {
+    flex: 1; text-align: center;
+    padding: 10px 12px; border-radius: 10px;
+    background: #1D1D1F; color: #fff;
+    text-decoration: none; font-size: 14px; font-weight: 500;
+    transition: background .15s;
+  }
+  .actions a.secondary {
+    background: rgba(120,120,128,0.12); color: #1D1D1F;
+  }
+  .actions a:hover { opacity: 0.9; }
+
+  .footer {
+    margin-top: 40px; padding-top: 24px;
+    border-top: 0.5px solid #E5E5EA;
+    color: #6E6E73; font-size: 13px;
+  }
+  .footer code { background: rgba(120,120,128,0.12); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>CH9347 Dashboard · 3 套 UI 方案预览</h1>
+  <div class="sub">面向普通用户重设计的 3 个方向 · PC 优先响应式布局 · 数据字段与 <code style="background:rgba(120,120,128,0.12);padding:2px 6px;border-radius:4px;font-size:12px;">release/dashboard_bundle.html</code> 的 DataManager 对齐。每个 mock 顶部都可切换 正常 / 满电 / 过温事件 / 低电量 / 未连接 五种状态。</div>
+
+  <div class="grid">
+
+    <!-- A -->
+    <div class="card">
+      <div class="thumb thumb-A">
+        <div class="demo-ring">87%</div>
+      </div>
+      <div class="body">
+        <div>
+          <span class="tag">Mock A</span>
+          <div class="name">iOS Health 风</div>
+        </div>
+        <div class="desc">浅色柔和、圆润卡片、大字号可读性。<b>主推方向</b>：SOC 大圆环 + 6 张 stat 网格 + 电芯柱状 + 异常 3 项 + 历史日志表 + 底部电池信息栏。字段对齐 dashboard_bundle 完整。</div>
+        <div class="meta">
+          <span>气质 <strong>温和通用</strong></span>
+          <span>DOM 兼容 <strong>高</strong></span>
+          <span>工作量 <strong>1–1.5 天</strong></span>
+        </div>
+        <div class="actions">
+          <a href="./mock_A_ios_health.html">打开预览 →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="card">
+      <div class="thumb thumb-B">
+        <div class="demo-ring">87%</div>
+      </div>
+      <div class="body">
+        <div>
+          <span class="tag">Mock B</span>
+          <div class="name">EV App 风</div>
+        </div>
+        <div class="desc">深色沉浸、电光蓝辉光、大直径 hero 环 + 产品剪影。中高端定位，年轻/数码爱好者；6 stat 网格排布同 A，视觉气质更"官方 App"。</div>
+        <div class="meta">
+          <span>气质 <strong>高级质感</strong></span>
+          <span>DOM 兼容 <strong>中高</strong></span>
+          <span>工作量 <strong>约 2 天</strong></span>
+        </div>
+        <div class="actions">
+          <a href="./mock_B_ev_app.html">打开预览 →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="card">
+      <div class="thumb thumb-C">
+        <div class="demo-c-hero">
+          <div class="battery-icon"><div></div></div>
+          <div class="demo-c-text">
+            <span class="p">87%</span>
+            <span class="m">电量充足</span>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <div>
+          <span class="tag">Mock C</span>
+          <div class="name">智能家电风</div>
+        </div>
+        <div class="desc">分区粉彩色卡、超大字号、hero 是一张彩色横幅"电量充足"+ 大数字。老人 / 入门用户最友好；主页信息全展开，无二级页。</div>
+        <div class="meta">
+          <span>气质 <strong>亲和易懂</strong></span>
+          <span>DOM 兼容 <strong>中</strong></span>
+          <span>工作量 <strong>约 1.5 天</strong></span>
+        </div>
+        <div class="actions">
+          <a href="./mock_C_smart_home.html">打开预览 →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <p style="margin-bottom:6px;">📂 所有 mock 位于 <code>Demo/mocks/</code>，均为自包含单文件 HTML，静态 mock 数据。数据字段与 <code>release/dashboard_bundle.html</code> 的 DataManager 对齐（SOC / SOH / 温度 / 循环次数 / 总压 / 电流 / 功率 / 电芯 / 电压异常 / 充电过温 / 放电过温 / 历史日志 / 电池信息栏）。</p>
+    <p>🖥️ 目前定位 PC 端优先（1280px），已加响应式：≤1100 单列 hero、≤900 平板双列、≤560 手机。切场景按钮永远在最顶部。</p>
+  </div>
+</div>
+</body>
+</html>

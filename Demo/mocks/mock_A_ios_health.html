@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的电池 · Mock A · iOS Health 风 · PC</title>
+<style>
+  :root {
+    --bg: #F5F5F7;
+    --card: #FFFFFF;
+    --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #A1A1A6;
+    --separator: #E5E5EA;
+
+    /* 语义色 · 与 release 阈值一致 */
+    --green: #34C759;    /* SOC>75 · SOH>=80 · 正常 */
+    --green-soft: #E7F7EC;
+    --orange: #FF9500;   /* SOC[20,75] · SOH[60,80) · 注意 */
+    --orange-soft: #FFF1DE;
+    --red: #FF3B30;      /* SOC<20 · SOH<60 · 告警 */
+    --red-soft: #FFE3E1;
+    --blue: #0A84FF;     /* 中性数据强调 */
+    --blue-soft: #E4F0FF;
+
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100vh; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    padding-bottom: 40px;
+    font-feature-settings: 'tnum' on;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+
+  /* 场景切换器 */
+  .scenario-bar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(245,245,247,0.92);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 12px 32px;
+    border-bottom: 0.5px solid var(--separator);
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .scenario-bar .label { font-size: 12px; color: var(--text-tertiary); margin-right: 4px; }
+  .scenario-bar button {
+    border: 0; background: rgba(120,120,128,0.12); color: var(--text-primary);
+    padding: 6px 12px; border-radius: 100px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background .15s;
+  }
+  .scenario-bar button.on { background: var(--text-primary); color: #fff; }
+  .scenario-bar button:hover:not(.on) { background: rgba(120,120,128,0.2); }
+
+  /* 页头 */
+  .header { padding: 24px 0 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .header .title-block { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .header h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.4px; }
+  .header h1 .dot-sep {
+    display: inline-block;
+    font-size: 1.4em; line-height: 0; vertical-align: -0.05em;
+    margin: 0 0.28em;
+    color: var(--blue);
+    font-weight: 400;
+  }
+  .header .product-badge {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--blue);
+    padding: 4px 12px; border-radius: 100px;
+    background: var(--blue-soft);
+  }
+  .connection { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--card); border-radius: 100px; box-shadow: var(--shadow); }
+  .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .conn-dot.off { background: var(--text-tertiary); }
+  .conn-sep { color: var(--text-tertiary); margin: 0 4px; }
+
+  /* 告警 banner */
+  .banner {
+    background: var(--red-soft); color: #7A100A;
+    padding: 16px 20px; border-radius: 14px; margin: 12px 0 20px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 15px; font-weight: 500;
+  }
+  .banner .icon { width: 24px; height: 24px; flex-shrink: 0; }
+  .banner .list { flex: 1; }
+  .banner .list .row { display: flex; gap: 12px; align-items: baseline; }
+  .banner .list .row + .row { margin-top: 4px; }
+  .banner .list .row .time { color: rgba(122,16,10,0.7); font-size: 13px; font-weight: 400; }
+
+  /* 通用 card */
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+  .card-title { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 4px; letter-spacing: 0.02em; }
+  .card-title.big { font-size: 15px; color: var(--text-primary); font-weight: 600; margin-bottom: 12px; }
+
+  /* 主行：SOC hero + 6 张 stat */
+  .row-main { display: grid; grid-template-columns: 380px 1fr; gap: 20px; margin-bottom: 20px; }
+
+  /* SOC Hero */
+  .hero {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 20px; text-align: center;
+    background: var(--card); border-radius: 20px; box-shadow: var(--shadow);
+  }
+  .ring-wrap { position: relative; width: 260px; height: 260px; }
+  .ring-wrap svg { display: block; transform: rotate(-90deg); }
+  .ring-track { stroke: var(--separator); }
+  .ring-fill { stroke: var(--green); stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.4,0,.2,1), stroke .3s; }
+  .ring-fill.warn { stroke: var(--orange); }
+  .ring-fill.danger { stroke: var(--red); }
+  .ring-fill.off { stroke: var(--text-tertiary); }
+  .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .soc-num {
+    font-size: 88px; font-weight: 600; letter-spacing: -3px; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--green);
+  }
+  .soc-num.warn { color: var(--orange); }
+  .soc-num.danger { color: var(--red); }
+  .soc-num.off { color: var(--text-tertiary); }
+  .soc-num .u { font-size: 32px; font-weight: 500; color: var(--text-secondary); margin-left: 3px; vertical-align: 12px; }
+  .soc-label { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
+  .soc-status {
+    margin-top: 18px; font-size: 17px; font-weight: 500;
+    padding: 8px 16px; border-radius: 100px;
+    background: var(--green-soft); color: #1F6C3A;
+  }
+  .soc-status.warn { background: var(--orange-soft); color: #8A4400; }
+  .soc-status.danger { background: var(--red-soft); color: #7A100A; }
+  .soc-status.off { background: var(--separator); color: var(--text-secondary); }
+
+  /* 右侧 6 张 stat（2x3） */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 16px; }
+  .stat {
+    background: var(--card); border-radius: 20px; box-shadow: var(--shadow);
+    padding: 18px 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 130px;
+  }
+  .stat-head { display: flex; justify-content: space-between; align-items: center; }
+  .stat-label { font-size: 13px; color: var(--text-secondary); }
+  .stat-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--blue-soft); color: var(--blue);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stat-icon.green { background: var(--green-soft); color: var(--green); }
+  .stat-icon.orange { background: var(--orange-soft); color: var(--orange); }
+  .stat-icon.red { background: var(--red-soft); color: var(--red); }
+  .stat-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .stat-value {
+    font-size: 32px; font-weight: 600; letter-spacing: -0.6px; line-height: 1.05;
+    font-variant-numeric: tabular-nums; margin-top: 8px;
+  }
+  .stat-value .u { font-size: 15px; font-weight: 500; color: var(--text-secondary); margin-left: 2px; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-value.red { color: var(--red); }
+  .stat-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+
+  /* 中间行：电芯 + 异常 3 项 */
+  .row-mid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  /* 电芯 */
+  .cells { padding: 20px; }
+  .cells-summary { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+  .cells-summary .k { font-size: 15px; font-weight: 600; }
+  .cells-summary .v { font-size: 13px; color: var(--text-secondary); }
+  .cells-summary .v strong { color: var(--text-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .cells-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .cell {
+    background: rgba(120,120,128,0.06); border-radius: 12px; padding: 14px 8px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .cell-bar-wrap { width: 22px; height: 96px; background: var(--separator); border-radius: 4px; overflow: hidden; position: relative; display: flex; align-items: flex-end; }
+  .cell-bar-fill { width: 100%; background: var(--green); transition: height .5s, background .3s; }
+  .cell-bar-fill.warn { background: var(--orange); }
+  .cell-bar-fill.danger { background: var(--red); }
+  .cell-num { font-size: 11px; color: var(--text-tertiary); }
+  .cell-v { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cell-v .u { font-size: 11px; color: var(--text-secondary); font-weight: 400; }
+
+  /* 异常记录 3 项 */
+  .abn-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .abn-item {
+    display: grid; grid-template-columns: 40px 1fr auto; gap: 14px; align-items: center;
+    padding: 12px 14px; border-radius: 12px;
+    background: var(--green-soft);
+  }
+  .abn-item.hit { background: var(--red-soft); }
+  .abn-item .aicon {
+    width: 32px; height: 32px; border-radius: 50%; background: rgba(52,199,89,0.2);
+    color: #1F6C3A;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .abn-item.hit .aicon { background: rgba(255,59,48,0.15); color: var(--red); }
+  .abn-item .aicon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .abn-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .abn-item.hit .abn-title { color: #7A100A; }
+  .abn-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .abn-item.hit .abn-sub { color: rgba(122,16,10,0.8); }
+  .abn-value {
+    font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--text-tertiary);
+  }
+  .abn-item.hit .abn-value { color: var(--red); }
+
+  /* 底部电池信息栏 · 4 列 */
+  .infobar {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    padding: 18px 24px;
+  }
+  .info-cell { min-width: 0; }
+  .info-cell .k { font-size: 12px; color: var(--text-tertiary); letter-spacing: 0.02em; margin-bottom: 4px; }
+  .info-cell .v { font-size: 14px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* 历史异常记录：可折叠 + 三列等宽 + 可调高 */
+  .logs-card { padding: 0; overflow: hidden; margin-bottom: 20px; }
+  .logs-head {
+    padding: 18px 20px; display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; user-select: none;
+    transition: background .15s;
+  }
+  .logs-head:hover { background: rgba(120,120,128,0.04); }
+  .logs-head h3 { font-size: 15px; font-weight: 600; }
+  .logs-head .right { display: flex; align-items: center; gap: 10px; }
+  .logs-head .count { font-size: 13px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .logs-head .chev {
+    width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-tertiary); transition: transform .2s;
+  }
+  .logs-head .chev svg { width: 14px; height: 14px; }
+  .logs-card.open .logs-head .chev { transform: rotate(180deg); }
+  .logs-body {
+    max-height: 0; overflow: hidden; transition: max-height .3s ease;
+    border-top: 0 solid var(--separator);
+  }
+  .logs-card.open .logs-body { max-height: 2000px; border-top-width: 0.5px; }
+  .logs-scroll {
+    resize: vertical; overflow: auto;
+    min-height: 200px; max-height: 800px; height: 280px;
+  }
+  table.logs { width: 100%; table-layout: fixed; border-collapse: collapse; }
+  table.logs th, table.logs td { padding: 10px 20px; text-align: left; font-size: 13px; border-bottom: 0.5px solid var(--separator); }
+  table.logs th { color: var(--text-secondary); font-weight: 500; background: rgba(120,120,128,0.04); font-size: 12px; letter-spacing: 0.02em; position: sticky; top: 0; z-index: 1; }
+  table.logs td { color: var(--text-primary); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  table.logs tr:last-child td { border-bottom: 0; }
+  table.logs .cat-chip { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 12px; font-weight: 500; background: var(--red-soft); color: var(--red); }
+  .logs-empty { padding: 32px; text-align: center; color: var(--text-tertiary); font-size: 14px; }
+
+  /* 断连 */
+  .disconnected .container > *:not(.scenario-bar):not(.header):not(#banner-slot) { opacity: 0.35; pointer-events: none; }
+
+  @media (max-width: 1100px) {
+    .row-main { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  @media (max-width: 900px) {
+    .container { padding: 0 20px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+    .row-mid { grid-template-columns: 1fr; }
+    .infobar { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .cells-list { grid-template-columns: repeat(2, 1fr); }
+    .infobar { grid-template-columns: 1fr; }
+    table.logs th, table.logs td { padding: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scenario-bar">
+  <span class="label">Mock 场景：</span>
+  <button data-s="normal" class="on">正常</button>
+  <button data-s="full">满电</button>
+  <button data-s="tempAlert">过温事件</button>
+  <button data-s="lowBattery">低电量</button>
+  <button data-s="disconnected">未连接</button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="title-block">
+      <h1>移动电源<span class="dot-sep">·</span>智能管家</h1>
+      <span class="product-badge" id="product-badge">CH9347-PB-6S</span>
+    </div>
+    <div class="connection">
+      <span class="conn-dot" id="conn-dot"></span>
+      <span id="conn-text">已连接</span>
+    </div>
+  </div>
+
+  <div id="banner-slot"></div>
+
+  <!-- 主行：SOC hero + 6 张 stat -->
+  <div class="row-main">
+    <div class="hero">
+      <div class="ring-wrap">
+        <svg width="260" height="260" viewBox="0 0 260 260">
+          <circle class="ring-track" cx="130" cy="130" r="112" fill="none" stroke-width="18"/>
+          <circle class="ring-fill" id="ring-fill" cx="130" cy="130" r="112" fill="none" stroke-width="18"
+                  stroke-dasharray="703.7" stroke-dashoffset="180"/>
+        </svg>
+        <div class="ring-center">
+          <div class="soc-num" id="soc-num-wrap"><span id="soc-num">72</span><span class="u">%</span></div>
+          <div class="soc-label">当前电量</div>
+        </div>
+      </div>
+      <div class="soc-status" id="soc-status">电量充足</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-head">
+          <span class="stat-label">电池寿命</span>
+          <span class="stat-icon green" id="soh-icon">
+            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </span>
+        </div>
+        <div class="stat-value green" id="soh-value"><span id="soh-num">92</span><span class="u">分</span></div>
+        <div class="stat-desc" id="soh-desc">状态优秀</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-head">
+          <span class="stat-label">温度</span>
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+          </span>
+        </div>
+        <div class="stat-value"><span id="temp-num">26</span><span class="u">°C</span></div>
+        <div class="stat-desc">电芯温度</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-head">
+          <span class="stat-label">充放电次数</span>
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </span>
+        </div>
+        <div class="stat-value"><span id="cycle-num">238</span><span class="u">次</span></div>
+        <div class="stat-desc">累计计数</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-head">
+          <span class="stat-label">总电压</span>
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </span>
+        </div>
+        <div class="stat-value"><span id="v-pack">24.6</span><span class="u">V</span></div>
+        <div class="stat-desc">电池组两端电压</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-head">
+          <span class="stat-label">当前电流</span>
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+        <div class="stat-value"><span id="i-pack">1.20</span><span class="u">A</span></div>
+        <div class="stat-desc">流经电池的电流</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-head">
+          <span class="stat-label">当前功率</span>
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
+          </span>
+        </div>
+        <div class="stat-value"><span id="p-pack">29.5</span><span class="u">W</span></div>
+        <div class="stat-desc">电压 × 电流</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中间行：电芯 + 异常 3 项 -->
+  <div class="row-mid">
+    <div class="cells card">
+      <div class="cells-summary">
+        <span class="k">单电池电压</span>
+        <span class="v">共 <strong id="cells-count">4</strong> 节</span>
+      </div>
+      <div class="cells-list" id="cells-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title big">异常状态</div>
+      <div class="abn-list" id="abn-list"></div>
+    </div>
+  </div>
+
+  <!-- 电池信息 -->
+  <div class="card infobar" style="margin-bottom: 20px;">
+    <div class="info-cell"><div class="k">电池型号</div><div class="v" id="bi-model">--</div></div>
+    <div class="info-cell"><div class="k">生产厂家</div><div class="v" id="bi-mfr">--</div></div>
+    <div class="info-cell"><div class="k">生产日期</div><div class="v" id="bi-date">--</div></div>
+    <div class="info-cell"><div class="k">电池编码</div><div class="v" id="bi-code">--</div></div>
+  </div>
+
+  <!-- 历史日志（默认收起） -->
+  <div class="card logs-card" id="logs-card">
+    <div class="logs-head" id="logs-head">
+      <h3>历史异常记录</h3>
+      <div class="right">
+        <span class="count" id="log-count">共 0 条</span>
+        <span class="chev">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </div>
+    </div>
+    <div class="logs-body">
+      <div class="logs-scroll" id="log-table-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Mock 数据（对齐 release/dashboard_bundle.html 的 DataManager）
+   已连接后仅呈现静态状态；无充电中/放电中区分；无预计时间。
+============================================================ */
+const scenarios = {
+  normal: {
+    connected: true,
+    productModel: 'CH9347-PB-6S',
+    soc: 72, soh: 92, temp: 26,
+    vPack: 24.6, iPack: 1.20, pPack: 29.5,
+    cycle: 238,
+    cells: [4.10, 4.09, 4.11, 4.10],
+    abnormals: { volt: null, chargeOT: null, dischargeOT: null },
+    logs: [],
+    battery: { model: 'PL-18650-12S6P', mfr: 'ACE Cells', date: '2025-08-15', code: 'PB-2601-A9F3' }
+  },
+  full: {
+    connected: true,
+    productModel: 'CH9347-PB-6S',
+    soc: 100, soh: 92, temp: 27,
+    vPack: 25.2, iPack: 0.10, pPack: 2.5,
+    cycle: 238,
+    cells: [4.20, 4.19, 4.20, 4.20],
+    abnormals: { volt: null, chargeOT: null, dischargeOT: null },
+    logs: [],
+    battery: { model: 'PL-18650-12S6P', mfr: 'ACE Cells', date: '2025-08-15', code: 'PB-2601-A9F3' }
+  },
+  tempAlert: {
+    connected: true,
+    productModel: 'CH9347-PB-6S',
+    soc: 55, soh: 88, temp: 48,
+    vPack: 23.7, iPack: 3.20, pPack: 75.8,
+    cycle: 240,
+    cells: [3.95, 3.94, 3.96, 3.95],
+    abnormals: {
+      volt: null,
+      chargeOT: { value: '48.0 C', time: '2026-07-20 14:32' },
+      dischargeOT: null
+    },
+    logs: [
+      { row: 1, category: '充电过温', value: '48.0 C', time: '2026-07-20 14:32' },
+      { row: 1, category: '充电过温', value: '46.5 C', time: '2026-07-17 10:14' },
+      { row: 0, category: '电压异常', value: '4.312 V', time: '2026-06-30 09:22' },
+    ],
+    battery: { model: 'PL-18650-12S6P', mfr: 'ACE Cells', date: '2025-08-15', code: 'PB-2601-A9F3' }
+  },
+  lowBattery: {
+    connected: true,
+    productModel: 'CH9347-PB-6S',
+    soc: 8, soh: 92, temp: 25,
+    vPack: 21.6, iPack: 0.90, pPack: 19.4,
+    cycle: 241,
+    cells: [3.60, 3.58, 3.62, 3.60],
+    abnormals: { volt: null, chargeOT: null, dischargeOT: null },
+    logs: [
+      { row: 0, category: '电压异常', value: '2.985 V', time: '2026-06-30 09:22' },
+    ],
+    battery: { model: 'PL-18650-12S6P', mfr: 'ACE Cells', date: '2025-08-15', code: 'PB-2601-A9F3' }
+  },
+  disconnected: { connected: false }
+};
+
+/* SOC 分段色 · 严格对齐 release BatteryWidget._colors */
+function socClass(v){
+  if (v > 75) return 'green';
+  if (v >= 20) return 'orange';
+  return 'danger';       // 用于 ring/soc-num 的类名
+}
+/* SOC → soc-num 的颜色类（用 warn 表示 orange，保持已有样式） */
+function socNumClass(v){
+  if (v > 75) return '';         // green 已作默认色
+  if (v >= 20) return 'warn';
+  return 'danger';
+}
+function socStatusText(v){
+  if (v > 75) return '电量充足';
+  if (v >= 20) return '电量适中';
+  return '电量不足，请充电';
+}
+function socStatusClass(v){
+  if (v > 75) return '';
+  if (v >= 20) return 'warn';
+  return 'danger';
+}
+
+/* SOH 分段色 · 严格对齐 release CircularProgressBar._color */
+function sohClass(v){
+  if (v >= 80) return 'green';
+  if (v >= 60) return 'orange';
+  return 'red';
+}
+function sohDesc(v){
+  if (v >= 80) return '状态优秀';
+  if (v >= 60) return '状态良好';
+  return '建议检查';
+}
+
+const $ = id => document.getElementById(id);
+const RING_C = 2 * Math.PI * 112;   // 703.7
+$('ring-fill').setAttribute('stroke-dasharray', RING_C);
+
+function iconWarn(){
+  return '<svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>';
+}
+function iconCheck(){
+  return '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
+}
+function iconInfo(){
+  return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>';
+}
+
+function render(name){
+  const scn = scenarios[name];
+  document.body.classList.toggle('disconnected', !scn.connected);
+
+  const socWrap = $('soc-num-wrap');
+  const ring = $('ring-fill');
+  const status = $('soc-status');
+
+  if (!scn.connected){
+    $('conn-dot').classList.add('off');
+    $('conn-text').textContent = '未连接';
+    $('product-badge').textContent = '--';
+    $('banner-slot').innerHTML = `<div class="banner" style="background:rgba(120,120,128,0.10);color:var(--text-secondary);">
+      <span class="icon">${iconInfo()}</span>
+      <span>还没有连接到电池，请检查数据线</span>
+    </div>`;
+    socWrap.classList.remove('warn','danger'); socWrap.classList.add('off');
+    ring.classList.remove('warn','danger'); ring.classList.add('off');
+    ring.setAttribute('stroke-dashoffset', RING_C);
+    status.classList.remove('warn','danger'); status.classList.add('off');
+    status.textContent = '未连接';
+    $('soc-num').textContent = '--';
+    /* 其余数字/文字全部归零 */
+    $('soh-num').textContent = '--';
+    $('soh-value').className = 'stat-value';
+    $('soh-icon').className = 'stat-icon';
+    $('soh-desc').textContent = '';
+    $('temp-num').textContent = '--';
+    $('cycle-num').textContent = '--';
+    $('v-pack').textContent = '--';
+    $('i-pack').textContent = '--';
+    $('p-pack').textContent = '--';
+    $('cells-count').textContent = '--';
+    $('cells-list').innerHTML = '';
+    $('abn-list').innerHTML = '';
+    $('log-count').textContent = '共 -- 条';
+    $('log-table-wrap').innerHTML = '<div class="logs-empty">未连接</div>';
+    $('bi-model').textContent = '--';
+    $('bi-mfr').textContent = '--';
+    $('bi-date').textContent = '--';
+    $('bi-code').textContent = '--';
+    return;
+  }
+
+  $('conn-dot').classList.remove('off');
+  $('conn-text').textContent = '已连接';
+  $('product-badge').textContent = scn.productModel;
+
+  /* Banner —— 来自异常记录 */
+  const abn = scn.abnormals;
+  const active = [];
+  if (abn.volt)         active.push({ label: '电压异常',  value: abn.volt.value,        time: abn.volt.time });
+  if (abn.chargeOT)     active.push({ label: '充电过温',  value: abn.chargeOT.value,    time: abn.chargeOT.time });
+  if (abn.dischargeOT)  active.push({ label: '放电过温',  value: abn.dischargeOT.value, time: abn.dischargeOT.time });
+  if (active.length){
+    $('banner-slot').innerHTML = `<div class="banner">
+      <span class="icon">${iconWarn()}</span>
+      <div class="list">${active.map(a => `<div class="row"><strong>${a.label}</strong><span>${a.value}</span><span class="time">${a.time}</span></div>`).join('')}</div>
+    </div>`;
+  } else {
+    $('banner-slot').innerHTML = '';
+  }
+
+  /* SOC */
+  $('soc-num').textContent = scn.soc;
+  socWrap.classList.remove('off','warn','danger');
+  const socCls = socNumClass(scn.soc);
+  if (socCls) socWrap.classList.add(socCls);
+  ring.classList.remove('off','warn','danger');
+  if (socCls) ring.classList.add(socCls);
+  ring.setAttribute('stroke-dashoffset', RING_C * (1 - scn.soc/100));
+  status.classList.remove('off','warn','danger');
+  const socStatCls = socStatusClass(scn.soc);
+  if (socStatCls) status.classList.add(socStatCls);
+  status.textContent = socStatusText(scn.soc);
+
+  /* SOH */
+  $('soh-num').textContent = scn.soh;
+  const sohCls = sohClass(scn.soh);
+  $('soh-value').className = 'stat-value ' + (sohCls === 'red' ? 'red' : sohCls);
+  $('soh-icon').className = 'stat-icon ' + (sohCls === 'red' ? 'red' : sohCls);
+  $('soh-desc').textContent = sohDesc(scn.soh);
+
+  /* 温度：无分色，仅显示 */
+  $('temp-num').textContent = scn.temp;
+  $('cycle-num').textContent = scn.cycle;
+  $('v-pack').textContent = scn.vPack.toFixed(1);
+  $('i-pack').textContent = scn.iPack.toFixed(2);
+  $('p-pack').textContent = scn.pPack.toFixed(1);
+
+  /* 电芯 */
+  const cells = scn.cells;
+  const cellMax = Math.max(...cells), cellMin = Math.min(...cells);
+  $('cells-count').textContent = cells.length;
+  const avg = cells.reduce((s,v)=>s+v,0)/cells.length;
+  const listWrap = $('cells-list'); listWrap.innerHTML = '';
+  cells.forEach((v, i) => {
+    // 3.0 ~ 4.25V 常见范围
+    const pct = Math.max(6, Math.min(100, Math.round((v - 3.0) / 1.25 * 100)));
+    // 与平均差 > 0.05 → 橙色警示
+    let cls = '';
+    if (Math.abs(v - avg) > 0.05) cls = ' warn';
+    const el = document.createElement('div');
+    el.className = 'cell';
+    el.innerHTML = `<span class="cell-num">第 ${i+1} 节</span>
+                    <div class="cell-bar-wrap"><div class="cell-bar-fill${cls}" style="height:${pct}%"></div></div>
+                    <div class="cell-v">${v.toFixed(2)}<span class="u">V</span></div>`;
+    listWrap.appendChild(el);
+  });
+
+  /* 异常记录 3 项 */
+  const abnList = $('abn-list');
+  const rows = [
+    { key: '电压异常', hit: !!abn.volt,        value: abn.volt?.value        || '正常', time: abn.volt?.time || '' },
+    { key: '充电过温', hit: !!abn.chargeOT,    value: abn.chargeOT?.value    || '正常', time: abn.chargeOT?.time || '' },
+    { key: '放电过温', hit: !!abn.dischargeOT, value: abn.dischargeOT?.value || '正常', time: abn.dischargeOT?.time || '' },
+  ];
+  abnList.innerHTML = rows.map(r => `
+    <div class="abn-item ${r.hit ? 'hit' : ''}">
+      <div class="aicon">${r.hit ? iconWarn() : iconCheck()}</div>
+      <div>
+        <div class="abn-title">${r.key}</div>
+        <div class="abn-sub">${r.hit ? r.time : '未触发'}</div>
+      </div>
+      <div class="abn-value">${r.value}</div>
+    </div>
+  `).join('');
+
+  /* 历史异常日志 · 三列等宽 */
+  const wrap = $('log-table-wrap');
+  $('log-count').textContent = '共 ' + scn.logs.length + ' 条';
+  if (!scn.logs.length){
+    wrap.innerHTML = '<div class="logs-empty">近期没有异常记录</div>';
+  } else {
+    wrap.innerHTML = `<table class="logs">
+      <colgroup><col style="width:33.33%"><col style="width:33.33%"><col style="width:33.34%"></colgroup>
+      <thead><tr><th>类型</th><th>数值</th><th>时间</th></tr></thead>
+      <tbody>${scn.logs.map(l => `<tr>
+        <td><span class="cat-chip">${l.category}</span></td>
+        <td>${l.value}</td>
+        <td>${l.time}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  /* 电池信息（不含产品型号） */
+  $('bi-model').textContent = scn.battery.model;
+  $('bi-mfr').textContent = scn.battery.mfr;
+  $('bi-date').textContent = scn.battery.date;
+  $('bi-code').textContent = scn.battery.code;
+}
+
+/* 折叠交互 */
+document.getElementById('logs-head').addEventListener('click', () => {
+  document.getElementById('logs-card').classList.toggle('open');
+});
+
+document.querySelectorAll('.scenario-bar button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.scenario-bar button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    render(btn.dataset.s);
+  });
+});
+render('normal');
+</script>
+</body>
+</html>
