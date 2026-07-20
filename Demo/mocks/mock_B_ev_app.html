@@ -269,9 +269,9 @@
   }
   .logs-empty { padding: 28px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
 
-  /* 电池信息 · 4 列 */
+  /* 电池信息 · 3 列 */
   .infobar {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
     padding: 20px;
   }
   .info-cell .k { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
@@ -415,7 +415,6 @@
   <div class="card infobar">
     <div class="info-cell"><div class="k">电池型号</div><div class="v" id="bi-model">--</div></div>
     <div class="info-cell"><div class="k">生产厂家</div><div class="v" id="bi-mfr">--</div></div>
-    <div class="info-cell"><div class="k">生产日期</div><div class="v" id="bi-date">--</div></div>
     <div class="info-cell"><div class="k">电池编码</div><div class="v" id="bi-code">--</div></div>
   </div>
 
@@ -509,7 +508,6 @@ function render(name){
     $('log-table-wrap').innerHTML = '<div class="logs-empty">未连接</div>';
     $('bi-model').textContent = '--';
     $('bi-mfr').textContent = '--';
-    $('bi-date').textContent = '--';
     $('bi-code').textContent = '--';
     return;
   }
@@ -609,7 +607,6 @@ function render(name){
   /* 电池信息（不含产品型号） */
   $('bi-model').textContent = scn.battery.model;
   $('bi-mfr').textContent = scn.battery.mfr;
-  $('bi-date').textContent = scn.battery.date;
   $('bi-code').textContent = scn.battery.code;
 }
 

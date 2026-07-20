@@ -238,7 +238,7 @@
     padding: 22px 26px;
   }
   .info-title { font-size: 17px; font-weight: 600; margin-bottom: 14px; }
-  .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
   .info-item .k { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
   .info-item .v { font-size: 15px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -415,7 +415,6 @@
     <div class="info-grid">
       <div class="info-item"><div class="k">电池型号</div><div class="v" id="bi-model">--</div></div>
       <div class="info-item"><div class="k">生产厂家</div><div class="v" id="bi-mfr">--</div></div>
-      <div class="info-item"><div class="k">生产日期</div><div class="v" id="bi-date">--</div></div>
       <div class="info-item"><div class="k">电池编码</div><div class="v" id="bi-code">--</div></div>
     </div>
   </div>
@@ -1428,7 +1427,6 @@ const hero = $('hero-card');
     $('log-table-wrap').innerHTML = '<div class="logs-empty">未连接</div>';
     $('bi-model').textContent = '--';
     $('bi-mfr').textContent = '--';
-    $('bi-date').textContent = '--';
     $('bi-code').textContent = '--';
     return;
   }
@@ -1512,7 +1510,6 @@ const hero = $('hero-card');
   /* 电池信息（不含产品型号） */
   $('bi-model').textContent = scn.battery.model;
   $('bi-mfr').textContent = scn.battery.mfr;
-  $('bi-date').textContent = scn.battery.date;
   $('bi-code').textContent = scn.battery.code;
 };
 
@@ -1712,15 +1709,6 @@ document.getElementById('logs-head').addEventListener('click', () => {
 
     </script>
     <script>
-    /* 折叠：历史异常记录 */
-    (function () {
-        var head = document.getElementById('logs-head');
-        var card = document.getElementById('logs-card');
-        if (head && card) {
-            head.addEventListener('click', function () { card.classList.toggle('open'); });
-        }
-    })();
-
     /* 主入口 */
     window.addEventListener('DOMContentLoaded', function () {
         try { LogManager.init(); } catch (e) { console.error('LogManager.init failed:', e); }

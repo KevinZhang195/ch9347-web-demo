@@ -108,7 +108,7 @@ REQUIRED_IDS = (
     "cells-list", "cells-count", "abn-list",
     "log-count", "log-table-wrap",
     "logs-head", "logs-card",
-    "bi-model", "bi-mfr", "bi-date", "bi-code",
+    "bi-model", "bi-mfr", "bi-code",
     "product-badge",
 )
 for name, body in [("A", body_a), ("B", body_b), ("C", body_c)]:
@@ -366,15 +366,6 @@ def build(name: str, ui_css: str, ui_body: str, ui_js: str) -> str:
 {BRIDGE_JS}
     </script>
     <script>
-    /* 折叠：历史异常记录 */
-    (function () {{
-        var head = document.getElementById('logs-head');
-        var card = document.getElementById('logs-card');
-        if (head && card) {{
-            head.addEventListener('click', function () {{ card.classList.toggle('open'); }});
-        }}
-    }})();
-
     /* 主入口 */
     window.addEventListener('DOMContentLoaded', function () {{
         try {{ LogManager.init(); }} catch (e) {{ console.error('LogManager.init failed:', e); }}
