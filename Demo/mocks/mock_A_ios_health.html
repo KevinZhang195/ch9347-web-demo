@@ -532,6 +532,8 @@ const $ = id => document.getElementById(id);
 const RING_C = 2 * Math.PI * 112;   // 703.7
 $('ring-fill').setAttribute('stroke-dasharray', RING_C);
 
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function iconWarn(){
   return '<svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>';
 }
@@ -598,7 +600,7 @@ function render(name){
   if (active.length){
     $('banner-slot').innerHTML = `<div class="banner">
       <span class="icon">${iconWarn()}</span>
-      <div class="list">${active.map(a => `<div class="row"><strong>${a.label}</strong><span>${a.value}</span><span class="time">${a.time}</span></div>`).join('')}</div>
+      <div class="list">${active.map(a => `<div class="row"><strong>${esc(a.label)}</strong><span>${esc(a.value)}</span><span class="time">${esc(a.time)}</span></div>`).join('')}</div>
     </div>`;
   } else {
     $('banner-slot').innerHTML = '';
@@ -662,10 +664,10 @@ function render(name){
     <div class="abn-item ${r.hit ? 'hit' : ''}">
       <div class="aicon">${r.hit ? iconWarn() : iconCheck()}</div>
       <div>
-        <div class="abn-title">${r.key}</div>
-        <div class="abn-sub">${r.hit ? r.time : '未触发'}</div>
+        <div class="abn-title">${esc(r.key)}</div>
+        <div class="abn-sub">${r.hit ? esc(r.time) : '未触发'}</div>
       </div>
-      <div class="abn-value">${r.value}</div>
+      <div class="abn-value">${esc(r.value)}</div>
     </div>
   `).join('');
 
@@ -679,9 +681,9 @@ function render(name){
       <colgroup><col style="width:33.33%"><col style="width:33.33%"><col style="width:33.34%"></colgroup>
       <thead><tr><th>类型</th><th>数值</th><th>时间</th></tr></thead>
       <tbody>${scn.logs.map(l => `<tr>
-        <td><span class="cat-chip">${l.category}</span></td>
-        <td>${l.value}</td>
-        <td>${l.time}</td>
+        <td><span class="cat-chip">${esc(l.category)}</span></td>
+        <td>${esc(l.value)}</td>
+        <td>${esc(l.time)}</td>
       </tr>`).join('')}</tbody>
     </table>`;
   }

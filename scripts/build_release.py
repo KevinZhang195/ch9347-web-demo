@@ -7,26 +7,31 @@ build_release.py — 从 release/dashboard_bundle.html 提取内核，与 3 个 
 import re
 from pathlib import Path
 
-ROOT = Path("/Volumes/Work/project/ch9347-web-demo")
-BASE = (ROOT / "release/dashboard_bundle.html").read_text(encoding="utf-8").splitlines(keepends=False)
+ROOT = Path(__file__).resolve().parent.parent
+BASE = (ROOT / "release/dashboard_bundle.html").read_text(encoding="utf-8")
 
 # ------- 定位内核 script 段 -------
-# 行号（1-based, 与 grep 输出一致）：
-#   707-714  : legacy-browser 探测
-#   861-863  : CH9347Lib 混淆库
-#   864-959  : polyfills + observeResize + BrowserSupport
-#   960-1192 : DataManager
-#   1193-1795: GPDriver 全体
-#   2627-2703: LogManager
-def slice_lines(a: int, b: int) -> str:
-    return "\n".join(BASE[a-1:b])
+# 使用显式标记提取，避免基线 HTML 增删行导致固定行号整体偏移。
+def extract_kernel(name: str) -> str:
+    start_marker = f"<!-- KERNEL:{name} -->"
+    end_marker = f"<!-- /KERNEL:{name} -->"
+    assert BASE.count(start_marker) == 1, f"[extract] {name} 起始标记数量不为 1"
+    assert BASE.count(end_marker) == 1, f"[extract] {name} 结束标记数量不为 1"
 
-legacy_probe = slice_lines(707, 714)
-ch9347_lib   = slice_lines(861, 863)
-browser_sup  = slice_lines(864, 959)
-data_manager = slice_lines(960, 1192)
-gp_driver    = slice_lines(1193, 1795)
-log_manager  = slice_lines(2627, 2703)
+    marker_pos = BASE.index(start_marker)
+    start = BASE.rfind("\n", 0, marker_pos) + 1
+    end_marker_pos = BASE.index(end_marker, marker_pos) + len(end_marker)
+    end = BASE.find("\n", end_marker_pos)
+    if end < 0:
+        end = len(BASE)
+    return BASE[start:end]
+
+legacy_probe = extract_kernel("legacy-probe")
+ch9347_lib   = extract_kernel("ch9347-lib")
+browser_sup  = extract_kernel("browser-support")
+data_manager = extract_kernel("data-manager")
+gp_driver    = extract_kernel("gp-driver")
+log_manager  = extract_kernel("log-manager")
 
 # 校验：这几个必须存在的关键 token
 for name, src, token in [
@@ -149,40 +154,51 @@ BRIDGE_JS = r"""
         } catch (e) { return String(dt); }
     }
 
+    var _renderTick = false;
     function renderAll() {
+        _renderTick = false;
         if (typeof window.render === 'function') {
             try { window.render(state); } catch (e) { console.error(e); }
+        }
+    }
+    function scheduleRender() {
+        if (_renderTick) return;
+        _renderTick = true;
+        if (window.requestAnimationFrame) {
+            window.requestAnimationFrame(renderAll);
+        } else {
+            window.setTimeout(renderAll, 16);
         }
     }
 
     window.__bindDataManager = function (dm) {
         dm.addEventListener('connectedChanged', function (e) {
             state.connected = !!e.detail;
-            renderAll();
+            scheduleRender();
         });
         dm.addEventListener('productModelChanged', function (e) {
             state.productModel = e.detail || '--';
-            renderAll();
+            scheduleRender();
         });
-        dm.addEventListener('batteryLevelChanged',  function (e) { state.soc = e.detail; renderAll(); });
-        dm.addEventListener('batteryHealthChanged', function (e) { state.soh = e.detail; renderAll(); });
-        dm.addEventListener('batteryTempChanged',   function (e) { state.temp = e.detail; renderAll(); });
-        dm.addEventListener('totalVoltageChanged',  function (e) { state.vPack = e.detail; renderAll(); });
-        dm.addEventListener('totalCurrentChanged',  function (e) { state.iPack = e.detail; renderAll(); });
-        dm.addEventListener('totalPowerChanged',    function (e) { state.pPack = e.detail; renderAll(); });
-        dm.addEventListener('cycleCountChanged',    function (e) { state.cycle = e.detail; renderAll(); });
+        dm.addEventListener('batteryLevelChanged',  function (e) { state.soc = e.detail; scheduleRender(); });
+        dm.addEventListener('batteryHealthChanged', function (e) { state.soh = e.detail; scheduleRender(); });
+        dm.addEventListener('batteryTempChanged',   function (e) { state.temp = e.detail; scheduleRender(); });
+        dm.addEventListener('totalVoltageChanged',  function (e) { state.vPack = e.detail; scheduleRender(); });
+        dm.addEventListener('totalCurrentChanged',  function (e) { state.iPack = e.detail; scheduleRender(); });
+        dm.addEventListener('totalPowerChanged',    function (e) { state.pPack = e.detail; scheduleRender(); });
+        dm.addEventListener('cycleCountChanged',    function (e) { state.cycle = e.detail; scheduleRender(); });
 
         dm.addEventListener('cellCountChanged', function (e) {
             var n = e.detail;
             var next = [];
             for (var i = 0; i < n; i++) next.push(state.cells[i] || 0);
             state.cells = next;
-            renderAll();
+            scheduleRender();
         });
         dm.addEventListener('cellVoltageChanged', function (e) {
             var d = e.detail;
             state.cells[d.index] = d.voltage;
-            renderAll();
+            scheduleRender();
         });
 
         dm.addEventListener('abnormalRecordChanged', function (e) {
@@ -190,20 +206,20 @@ BRIDGE_JS = r"""
             var key = abnormalKeys[d.row];
             if (key) {
                 state.abnormals[key] = { value: d.value, time: fmtTime(d.time) };
-                renderAll();
+                scheduleRender();
             }
         });
         dm.addEventListener('abnormalRecordCleared', function (e) {
             var key = abnormalKeys[e.detail];
             if (key) {
                 state.abnormals[key] = null;
-                renderAll();
+                scheduleRender();
             }
         });
 
         dm.addEventListener('historicalLogsCleared', function () {
             state.logs = [];
-            renderAll();
+            scheduleRender();
         });
         dm.addEventListener('historicalLogsUpdated', function (e) {
             var d = e.detail;
@@ -215,13 +231,13 @@ BRIDGE_JS = r"""
             });
             // 页面渲染只显示最新 500 条，与 DataManager 上限一致
             if (state.logs.length > 500) state.logs.shift();
-            renderAll();
+            scheduleRender();
         });
 
-        dm.addEventListener('batteryModelChanged',   function (e) { state.battery.model = e.detail || '--'; renderAll(); });
-        dm.addEventListener('manufacturerChanged',   function (e) { state.battery.mfr = e.detail || '--'; renderAll(); });
-        dm.addEventListener('productionDateChanged', function (e) { state.battery.date = e.detail || '--'; renderAll(); });
-        dm.addEventListener('batteryCodeChanged',    function (e) { state.battery.code = e.detail || '--'; renderAll(); });
+        dm.addEventListener('batteryModelChanged',   function (e) { state.battery.model = e.detail || '--'; scheduleRender(); });
+        dm.addEventListener('manufacturerChanged',   function (e) { state.battery.mfr = e.detail || '--'; scheduleRender(); });
+        dm.addEventListener('productionDateChanged', function (e) { state.battery.date = e.detail || '--'; scheduleRender(); });
+        dm.addEventListener('batteryCodeChanged',    function (e) { state.battery.code = e.detail || '--'; scheduleRender(); });
 
         renderAll();
     };
@@ -353,7 +369,7 @@ def build(name: str, ui_css: str, ui_body: str, ui_js: str) -> str:
     </div>
     <button id="log-toggle-btn" title="打开/关闭日志">≡</button>
 
-    {ch9347_lib}
+{ch9347_lib}
 {browser_sup}
 {data_manager}
 {gp_driver}
@@ -388,6 +404,7 @@ def build(name: str, ui_css: str, ui_body: str, ui_js: str) -> str:
         }} else {{
             var driver = new GPDriver(dm);
             driver.start();
+            window.addEventListener('pagehide', function(e) {{ if (!e.persisted) driver.stop(); }});
         }}
     }});
     </script>

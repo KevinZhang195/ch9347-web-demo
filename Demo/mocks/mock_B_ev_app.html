@@ -466,6 +466,8 @@ const $ = id => document.getElementById(id);
 const RING_C = 2 * Math.PI * 165;
 $('ring-fill').setAttribute('stroke-dasharray', RING_C);
 
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function socColorClass(v){ if(v>75) return ''; if(v>=20) return 'warn'; return 'danger'; }
 function socStatusText(v){ if(v>75) return '电量充足'; if(v>=20) return '电量适中'; return '电量不足，请充电'; }
 function sohColorClass(v){ if(v>=80) return 'green'; if(v>=60) return 'orange'; return 'red'; }
@@ -524,7 +526,7 @@ function render(name){
   if(abn.dischargeOT) active.push({ label:'放电过温', value:abn.dischargeOT.value, time:abn.dischargeOT.time });
   if(active.length){
     $('banner-slot').innerHTML = `<div class="alert-bar">${iconWarn()}
-      <div class="list">${active.map(a => `<div class="row"><strong>${a.label}</strong><span>${a.value}</span><span class="time">${a.time}</span></div>`).join('')}</div>
+      <div class="list">${active.map(a => `<div class="row"><strong>${esc(a.label)}</strong><span>${esc(a.value)}</span><span class="time">${esc(a.time)}</span></div>`).join('')}</div>
     </div>`;
   } else {
     $('banner-slot').innerHTML = '';
@@ -580,10 +582,10 @@ function render(name){
     <div class="abn-row ${r.hit ? 'hit':''}">
       <div class="aicon">${r.hit ? iconWarn() : iconCheck()}</div>
       <div>
-        <div class="abn-title">${r.key}</div>
-        <div class="abn-sub">${r.hit ? r.time : '未触发'}</div>
+        <div class="abn-title">${esc(r.key)}</div>
+        <div class="abn-sub">${r.hit ? esc(r.time) : '未触发'}</div>
       </div>
-      <div class="abn-value">${r.value}</div>
+      <div class="abn-value">${esc(r.value)}</div>
     </div>
   `).join('');
 
@@ -597,9 +599,9 @@ function render(name){
       <colgroup><col style="width:33.33%"><col style="width:33.33%"><col style="width:33.34%"></colgroup>
       <thead><tr><th>类型</th><th>数值</th><th>时间</th></tr></thead>
       <tbody>${scn.logs.map(l => `<tr>
-        <td><span class="cat-chip">${l.category}</span></td>
-        <td>${l.value}</td>
-        <td>${l.time}</td>
+        <td><span class="cat-chip">${esc(l.category)}</span></td>
+        <td>${esc(l.value)}</td>
+        <td>${esc(l.time)}</td>
       </tr>`).join('')}</tbody>
     </table>`;
   }
