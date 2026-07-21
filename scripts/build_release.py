@@ -279,9 +279,9 @@ js_c = mockjs_to_renderer(js_c)
 
 # ------- 组装 -------
 DASH_TITLES = {
-    "ios_health": "传应创新AI智能管理专家",
-    "ev_app":     "传应创新AI智能管理专家",
-    "smart_home": "传应创新AI智能管理专家",
+    "ios_health": "传应创新AI充电专家",
+    "ev_app":     "传应创新AI充电专家",
+    "smart_home": "传应创新AI充电专家",
 }
 
 def build(name: str, ui_css: str, ui_body: str, ui_js: str) -> str:
