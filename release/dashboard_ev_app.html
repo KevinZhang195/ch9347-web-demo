@@ -1501,7 +1501,7 @@ document.body.classList.toggle('disconnected', !scn.connected);
     $('conn-dot').classList.add('off');
     $('conn-text').textContent = '未连接';
     $('product-badge').textContent = '--';
-    $('banner-slot').innerHTML = `<div class="alert-bar" style="background:rgba(94,104,120,0.08);border-color:var(--hair-strong);color:var(--text-secondary)">${iconInfo()}<span>还没有连接到电池，请检查数据线</span></div>`;
+    $('banner-slot').innerHTML = `<div class="alert-bar" style="background:rgba(94,104,120,0.08);border-color:var(--hair-strong);color:var(--text-secondary)">${iconInfo()}<span>还没有连接到移动电源，请检查检查数据线和电脑端是否正确连接。</span></div>`;
     socWrap.className = 'soc-num off';
     ring.className = 'ring-fill off';
     ring.setAttribute('stroke-dashoffset', RING_C);
