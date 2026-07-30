@@ -392,14 +392,14 @@
 <script>
 const scenarios = {
   normal:      { connected:true, productModel:'CH9347-PB-6S', soc:72, soh:92, temp:26, vPack:24.6, iPack:1.20, pPack:29.5, cycle:238,
-                 cells:[4.10,4.09,4.11,4.10], abnormals:{ volt:null, chargeOT:null, dischargeOT:null }, logs:[],
+                 cells:[4.10,4.09,4.11,4.10], abnormals:{ batt1:null, batt2:null, batt3:null, batt4:null, chargeOT:null, dischargeOT:null, storeOT:null }, logs:[],
                  battery:{ model:'PL-18650-12S6P', mfr:'ACE Cells', date:'2025-08-15', code:'PB-2601-A9F3' } },
   full:        { connected:true, productModel:'CH9347-PB-6S', soc:100, soh:92, temp:27, vPack:25.2, iPack:0.10, pPack:2.5, cycle:238,
-                 cells:[4.20,4.19,4.20,4.20], abnormals:{ volt:null, chargeOT:null, dischargeOT:null }, logs:[],
+                 cells:[4.20,4.19,4.20,4.20], abnormals:{ batt1:null, batt2:null, batt3:null, batt4:null, chargeOT:null, dischargeOT:null, storeOT:null }, logs:[],
                  battery:{ model:'PL-18650-12S6P', mfr:'ACE Cells', date:'2025-08-15', code:'PB-2601-A9F3' } },
   tempAlert:   { connected:true, productModel:'CH9347-PB-6S', soc:55, soh:88, temp:48, vPack:23.7, iPack:3.20, pPack:75.8, cycle:240,
                  cells:[3.95,3.94,3.96,3.95],
-                 abnormals:{ volt:null, chargeOT:{ value:'48.0 C', time:'2026-07-20 14:32' }, dischargeOT:null },
+                 abnormals:{ batt1:null, batt2:null, batt3:null, batt4:null, chargeOT:{ value:'48.0 C', time:'2026-07-20 14:32' }, dischargeOT:null, storeOT:null },
                  logs:[
                    { row:1, category:'充电过温', value:'48.0 C', time:'2026-07-20 14:32' },
                    { row:1, category:'充电过温', value:'46.5 C', time:'2026-07-17 10:14' },
@@ -407,7 +407,7 @@ const scenarios = {
                  ],
                  battery:{ model:'PL-18650-12S6P', mfr:'ACE Cells', date:'2025-08-15', code:'PB-2601-A9F3' } },
   lowBattery:  { connected:true, productModel:'CH9347-PB-6S', soc:8, soh:92, temp:25, vPack:21.6, iPack:0.90, pPack:19.4, cycle:241,
-                 cells:[3.60,3.58,3.62,3.60], abnormals:{ volt:null, chargeOT:null, dischargeOT:null },
+                 cells:[3.60,3.58,3.62,3.60], abnormals:{ batt1:null, batt2:null, batt3:null, batt4:null, chargeOT:null, dischargeOT:null, storeOT:null },
                  logs:[{ row:0, category:'电压异常', value:'2.985 V', time:'2026-06-30 09:22' }],
                  battery:{ model:'PL-18650-12S6P', mfr:'ACE Cells', date:'2025-08-15', code:'PB-2601-A9F3' } },
   disconnected:{ connected:false }
@@ -503,13 +503,17 @@ function render(name){
     listWrap.appendChild(el);
   });
 
-  /* 异常 3 项 */
+  /* 异常状态 4 项：电压异常聚合 4 节电池，取第一个触发 */
   const abn = scn.abnormals;
   const abnList = $('abn-list');
+  const battArr = [abn.batt1, abn.batt2, abn.batt3, abn.batt4];
+  const voltIdx = battArr.findIndex(x => x);
+  const voltHit = voltIdx >= 0 ? battArr[voltIdx] : null;
   const rows = [
-    { key:'电压异常', hit: !!abn.volt,        value: abn.volt?.value        || '正常', time: abn.volt?.time || '未触发' },
+    { key:'电压异常', hit: !!voltHit,         value: voltHit ? ('电池' + (voltIdx+1) + ': ' + voltHit.value) : '正常', time: voltHit?.time || '未触发' },
     { key:'充电过温', hit: !!abn.chargeOT,    value: abn.chargeOT?.value    || '正常', time: abn.chargeOT?.time || '未触发' },
     { key:'放电过温', hit: !!abn.dischargeOT, value: abn.dischargeOT?.value || '正常', time: abn.dischargeOT?.time || '未触发' },
+    { key:'储存过温', hit: !!abn.storeOT,     value: abn.storeOT?.value     || '正常', time: abn.storeOT?.time || '未触发' },
   ];
   abnList.innerHTML = rows.map(r => `
     <div class="abn-tile ${r.hit ? 'hit':''}">

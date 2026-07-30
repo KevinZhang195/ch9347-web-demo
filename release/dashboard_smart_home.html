@@ -1734,13 +1734,17 @@ const hero = $('hero-card');
     listWrap.appendChild(el);
   });
 
-  /* 异常 3 项 */
+  /* 异常状态 4 项：电压异常聚合 4 节电池，取第一个触发 */
   const abn = scn.abnormals;
   const abnList = $('abn-list');
+  const battArr = [abn.batt1, abn.batt2, abn.batt3, abn.batt4];
+  const voltIdx = battArr.findIndex(x => x);
+  const voltHit = voltIdx >= 0 ? battArr[voltIdx] : null;
   const rows = [
-    { key:'电压异常', hit: !!abn.volt,        value: abn.volt?.value        || '正常', time: abn.volt?.time || '未触发' },
+    { key:'电压异常', hit: !!voltHit,         value: voltHit ? ('电池' + (voltIdx+1) + ': ' + voltHit.value) : '正常', time: voltHit?.time || '未触发' },
     { key:'充电过温', hit: !!abn.chargeOT,    value: abn.chargeOT?.value    || '正常', time: abn.chargeOT?.time || '未触发' },
     { key:'放电过温', hit: !!abn.dischargeOT, value: abn.dischargeOT?.value || '正常', time: abn.dischargeOT?.time || '未触发' },
+    { key:'储存过温', hit: !!abn.storeOT,     value: abn.storeOT?.value     || '正常', time: abn.storeOT?.time || '未触发' },
   ];
   abnList.innerHTML = rows.map(r => `
     <div class="abn-tile ${r.hit ? 'hit':''}">

@@ -1796,9 +1796,11 @@ document.body.classList.toggle('disconnected', !scn.connected);
   /* Banner —— 来自异常记录 */
   const abn = scn.abnormals;
   const active = [];
-  if (abn.volt)         active.push({ label: '电压异常',  value: abn.volt.value,        time: abn.volt.time });
+  const battHits = [abn.batt1, abn.batt2, abn.batt3, abn.batt4];
+  battHits.forEach((h, i) => { if (h) active.push({ label: '电池' + (i+1) + '过压', value: h.value, time: h.time }); });
   if (abn.chargeOT)     active.push({ label: '充电过温',  value: abn.chargeOT.value,    time: abn.chargeOT.time });
   if (abn.dischargeOT)  active.push({ label: '放电过温',  value: abn.dischargeOT.value, time: abn.dischargeOT.time });
+  if (abn.storeOT)      active.push({ label: '储存过温',  value: abn.storeOT.value,     time: abn.storeOT.time });
   if (active.length){
     $('banner-slot').innerHTML = `<div class="banner">
       <span class="icon">${iconWarn()}</span>
@@ -1855,12 +1857,16 @@ document.body.classList.toggle('disconnected', !scn.connected);
     listWrap.appendChild(el);
   });
 
-  /* 异常记录 3 项 */
+  /* 异常状态 4 项：电压异常聚合 4 节电池，取第一个触发 */
   const abnList = $('abn-list');
+  const battArr = [abn.batt1, abn.batt2, abn.batt3, abn.batt4];
+  const voltIdx = battArr.findIndex(x => x);
+  const voltHit = voltIdx >= 0 ? battArr[voltIdx] : null;
   const rows = [
-    { key: '电压异常', hit: !!abn.volt,        value: abn.volt?.value        || '正常', time: abn.volt?.time || '' },
+    { key: '电压异常', hit: !!voltHit,         value: voltHit ? ('电池' + (voltIdx+1) + ': ' + voltHit.value) : '正常', time: voltHit?.time || '' },
     { key: '充电过温', hit: !!abn.chargeOT,    value: abn.chargeOT?.value    || '正常', time: abn.chargeOT?.time || '' },
     { key: '放电过温', hit: !!abn.dischargeOT, value: abn.dischargeOT?.value || '正常', time: abn.dischargeOT?.time || '' },
+    { key: '储存过温', hit: !!abn.storeOT,     value: abn.storeOT?.value     || '正常', time: abn.storeOT?.time || '' },
   ];
   abnList.innerHTML = rows.map(r => `
     <div class="abn-item ${r.hit ? 'hit' : ''}">
