@@ -1741,7 +1741,7 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
   function getAbnState(cells, temp, cur) {
     var voltHit = null, voltLabel = '';
     for (var i = 0; i < cells.length; i++) {
-      if (cells[i] > 4.25 || cells[i] < 3.0) {
+      if (cells[i] > 4.52 || cells[i] < 3.0) {
         voltHit = cells[i].toFixed(3) + ' V';
         voltLabel = '电池' + (i + 1) + ': ';
         break;
@@ -1751,8 +1751,8 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
     var discharging = cur < -0.1;
     return {
       volt: { value: voltHit, label: voltLabel },
-      chargeOT: (charging && temp > 45) ? { value: temp.toFixed(1) + ' C' } : null,
-      dischargeOT: (discharging && temp > 45) ? { value: temp.toFixed(1) + ' C' } : null,
+      chargeOT: (charging && temp > 50) ? { value: temp.toFixed(1) + ' C' } : null,
+      dischargeOT: (discharging && temp > 58) ? { value: temp.toFixed(1) + ' C' } : null,
     };
   }
 
