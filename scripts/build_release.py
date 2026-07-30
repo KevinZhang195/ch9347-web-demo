@@ -248,6 +248,9 @@ BRIDGE_JS = r"""
         dm.addEventListener('productionDateChanged', function (e) { state.battery.date = e.detail || '--'; scheduleRender(); });
         dm.addEventListener('batteryCodeChanged',    function (e) { state.battery.code = e.detail || '--'; scheduleRender(); });
 
+        // 1Hz 兜底：即便数据事件静默（例如设备保持稳态），也让"异常状态"卡片按秒重算激活/恢复
+        window.setInterval(scheduleRender, 1000);
+
         renderAll();
     };
 })();

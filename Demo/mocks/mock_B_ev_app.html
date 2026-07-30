@@ -478,6 +478,26 @@ function socStatusText(v){ if(v>75) return '电量充足'; if(v>=20) return '电
 function sohColorClass(v){ if(v>=80) return 'green'; if(v>=60) return 'orange'; return 'red'; }
 function sohDesc(v){ if(v>=80) return '相当于新电池的 ' + v + '%'; if(v>=60) return '仍可使用 · 状态良好'; return '建议检查电池'; }
 
+
+  /* 实时异常推导（从 cells / temp / iPack 动态计算，不依赖历史记录） */
+  function getAbnState(cells, temp, cur) {
+    var voltHit = null, voltLabel = '';
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i] > 4.25 || cells[i] < 3.0) {
+        voltHit = cells[i].toFixed(3) + ' V';
+        voltLabel = '电池' + (i + 1) + ': ';
+        break;
+      }
+    }
+    var charging = cur > 0.1;
+    var discharging = cur < -0.1;
+    return {
+      volt: { value: voltHit, label: voltLabel },
+      chargeOT: (charging && temp > 45) ? { value: temp.toFixed(1) + ' C' } : null,
+      dischargeOT: (discharging && temp > 45) ? { value: temp.toFixed(1) + ' C' } : null,
+    };
+  }
+
 function iconWarn(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>'; }
 function iconCheck(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'; }
 function iconInfo(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>'; }
@@ -524,14 +544,12 @@ function render(name){
   $('conn-text').textContent = '已连接';
   $('product-badge').textContent = scn.productModel;
 
-  /* Banner */
-  const abn = scn.abnormals;
+  /* Banner —— 实时异常推导 */
+  const abn = getAbnState(scn.cells || [], scn.temp || 0, scn.iPack || 0);
   const active = [];
-  const battHits = [abn.batt1, abn.batt2, abn.batt3, abn.batt4];
-  battHits.forEach((h, i) => { if(h) active.push({ label:'电池' + (i+1) + '过压', value:h.value, time:h.time }); });
-  if(abn.chargeOT)    active.push({ label:'充电过温', value:abn.chargeOT.value, time:abn.chargeOT.time });
-  if(abn.dischargeOT) active.push({ label:'放电过温', value:abn.dischargeOT.value, time:abn.dischargeOT.time });
-  if(abn.storeOT)     active.push({ label:'储存过温', value:abn.storeOT.value, time:abn.storeOT.time });
+  if(abn.volt.value)        active.push({ label:'电压异常', value:abn.volt.label + abn.volt.value,  time:'刚刚' });
+  if(abn.chargeOT)          active.push({ label:'充电过温', value:abn.chargeOT.value,               time:'刚刚' });
+  if(abn.dischargeOT)       active.push({ label:'放电过温', value:abn.dischargeOT.value,            time:'刚刚' });
   if(active.length){
     $('banner-slot').innerHTML = `<div class="alert-bar">${iconWarn()}
       <div class="list">${active.map(a => `<div class="row"><strong>${esc(a.label)}</strong><span>${esc(a.value)}</span><span class="time">${esc(a.time)}</span></div>`).join('')}</div>
@@ -579,23 +597,19 @@ function render(name){
     listWrap.appendChild(el);
   });
 
-  /* 异常状态 4 项：电压异常聚合 4 节电池，取第一个触发 */
+  /* 异常状态：实时推导（cells/temp/iPack），不依赖历史记录，储存过温已移除 */
   const abnList = $('abn-list');
-  const battArr = [abn.batt1, abn.batt2, abn.batt3, abn.batt4];
-  const voltIdx = battArr.findIndex(x => x);
-  const voltHit = voltIdx >= 0 ? battArr[voltIdx] : null;
   const rows = [
-    { key:'电压异常', hit: !!voltHit,         value: voltHit ? ('电池' + (voltIdx+1) + ': ' + voltHit.value) : '正常', time: voltHit?.time || '' },
-    { key:'充电过温', hit: !!abn.chargeOT,    value: abn.chargeOT?.value    || '正常', time: abn.chargeOT?.time || '' },
-    { key:'放电过温', hit: !!abn.dischargeOT, value: abn.dischargeOT?.value || '正常', time: abn.dischargeOT?.time || '' },
-    { key:'储存过温', hit: !!abn.storeOT,     value: abn.storeOT?.value     || '正常', time: abn.storeOT?.time || '' },
+    { key:'电压异常', hit: !!abn.volt.value,  value: abn.volt.label + (abn.volt.value || '正常') },
+    { key:'充电过温', hit: !!abn.chargeOT,    value: abn.chargeOT?.value  || '正常' },
+    { key:'放电过温', hit: !!abn.dischargeOT, value: abn.dischargeOT?.value || '正常' },
   ];
   abnList.innerHTML = rows.map(r => `
     <div class="abn-row ${r.hit ? 'hit':''}">
       <div class="aicon">${r.hit ? iconWarn() : iconCheck()}</div>
       <div>
         <div class="abn-title">${esc(r.key)}</div>
-        <div class="abn-sub">${r.hit ? esc(r.time) : '未触发'}</div>
+        <div class="abn-sub">${r.hit ? '刚刚' : '未触发'}</div>
       </div>
       <div class="abn-value">${esc(r.value)}</div>
     </div>
