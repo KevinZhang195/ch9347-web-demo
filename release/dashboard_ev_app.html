@@ -474,6 +474,7 @@
     <div class="info-cell"><div class="k">电池型号</div><div class="v" id="bi-model">--</div></div>
     <div class="info-cell"><div class="k">生产厂家</div><div class="v" id="bi-mfr">--</div></div>
     <div class="info-cell"><div class="k">电池编码</div><div class="v" id="bi-code">--</div></div>
+    <div class="info-cell"><div class="k">生产日期</div><div class="v" id="bi-date">--</div></div>
   </div>
 
   <!-- 历史异常记录（默认收起，可拉伸） -->
@@ -608,6 +609,140 @@ const BrowserSupport = {
 
     </script>
     <!-- /KERNEL:browser-support -->
+    <!-- KERNEL:battery-code-parser -->
+    <script>
+/**
+ * @file    battery_code_parser.js
+ * @brief   电池编号（Battery Coding）解析器 — GB/T 45565-2025
+ *
+ * 规则详见项目根目录《电池编号解析规则.md》，与 C++ 版本
+ * (src/core/batterycodeparser.cpp) 行为保持一致：
+ *
+ *   编号格式（主编码至少 9 位，'-' 之后的扩展信息直接丢弃）：
+ *     [企业代码3位][扩展位1位][电池类型1位][电池体系1位][生产日期3位]
+ *
+ *   - 企业代码：优先匹配 4 位子公司表，未命中回退 3 位母公司表（大小写不敏感）
+ *   - 生产日期：索引 6~8，年/月/日各 1 字符编码
+ *   - 非法日历日期（如 9 月 31 日）：厂家仍有效，productionDate 为 null
+ */
+var BatteryCodeParser = (function () {
+    "use strict";
+
+    var MIN_CODE_LEN = 9;   // 主编码最小有效长度
+
+    // ── 子公司映射表（4 位，优先匹配）─────────────────────────
+    var SUB_FACTORY_TABLE = [
+        ["EVE1", "惠州亿纬锂能股份有限公司"],
+        ["ATLN", "宁德新能源科技有限公司"],
+        ["ATLD", "东莞新能源科技有限公司"]
+    ];
+
+    // ── 母公司映射表（3 位，回退匹配）─────────────────────────
+    var PARENT_FACTORY_TABLE = [
+        ["ATL", "新能源科技有限公司"],
+        ["XWD", "欣旺达电子有限公司"],
+        ["BYD", "比亚迪锂电池有限公司"],
+        ["EVE", "亿纬锂能股份有限公司"],
+        ["GFL", "赣锋锂电科技有限公司"]
+    ];
+
+    function findFactoryName(mainCode) {
+        var i;
+        // 优先匹配 4 位子公司代码
+        if (mainCode.length >= 4) {
+            var prefix4 = mainCode.substring(0, 4).toUpperCase();
+            for (i = 0; i < SUB_FACTORY_TABLE.length; i++) {
+                if (prefix4 === SUB_FACTORY_TABLE[i][0]) return SUB_FACTORY_TABLE[i][1];
+            }
+        }
+        // 回退匹配 3 位母公司代码
+        if (mainCode.length >= 3) {
+            var prefix3 = mainCode.substring(0, 3).toUpperCase();
+            for (i = 0; i < PARENT_FACTORY_TABLE.length; i++) {
+                if (prefix3 === PARENT_FACTORY_TABLE[i][0]) return PARENT_FACTORY_TABLE[i][1];
+            }
+        }
+        return null;
+    }
+
+    // 年份编码表（F=2025 起，跳过 I/O/Q/U/Z；以规则文档 C 例程为准）
+    var YEAR_CODES = {
+        F: 2025, G: 2026, H: 2027, J: 2028, K: 2029, L: 2030, M: 2031,
+        N: 2032, P: 2033, R: 2034, S: 2035, T: 2036, V: 2037, W: 2038,
+        X: 2039, Y: 2040,
+        1: 2041, 2: 2042, 3: 2043, 4: 2044, 5: 2045, 6: 2046, 7: 2047,
+        8: 2048, 9: 2049,
+        A: 2050, B: 2051, C: 2052, D: 2053, E: 2054
+    };
+
+    function parseMonthCode(ch) {
+        if (ch >= "1" && ch <= "9") return ch.charCodeAt(0) - 48;
+        if (ch === "A") return 10;
+        if (ch === "B") return 11;
+        if (ch === "C") return 12;
+        return -1;
+    }
+
+    // 日期编码表（1~9=1~9日，A~Y=10~30日跳过 I/O/Q/U/Z，0=31日）
+    var DAY_CODES = {
+        A: 10, B: 11, C: 12, D: 13, E: 14, F: 15, G: 16, H: 17, J: 18,
+        K: 19, L: 20, M: 21, N: 22, P: 23, R: 24, S: 25, T: 26, V: 27,
+        W: 28, X: 29, Y: 30, 0: 31
+    };
+
+    function parseDayCode(ch) {
+        if (ch >= "1" && ch <= "9") return ch.charCodeAt(0) - 48;
+        return DAY_CODES.hasOwnProperty(ch) ? DAY_CODES[ch] : -1;
+    }
+
+    // 日历合法性检查（规则不强制校验，但非法日期无法表示，同 C++ QDate 行为）
+    function isValidCalendarDate(year, month, day) {
+        var dim = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        if (month === 2 && ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0)) dim[1] = 29;
+        return month >= 1 && month <= 12 && day >= 1 && day <= dim[month - 1];
+    }
+
+    function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+    /**
+     * 解析电池编号
+     * @param {string} code 原始编号字符串，如 "ATLNXXF1A-REV01"
+     * @returns {{valid: boolean, factoryName: string|null, productionDate: string|null}}
+     *          productionDate 格式 "yyyy-MM-dd"；非法日历日期时为 null
+     */
+    function parse(code) {
+        var result = { valid: false, factoryName: null, productionDate: null };
+
+        if (!code || code.length === 0) return result;
+
+        // 截取 '-' 之前的部分作为主编码
+        var dashIdx = code.indexOf("-");
+        var mainCode = dashIdx >= 0 ? code.substring(0, dashIdx) : code;
+        if (mainCode.length < MIN_CODE_LEN) return result;
+
+        // 企业代码
+        var factory = findFactoryName(mainCode);
+        if (factory === null) return result;
+
+        // 生产日期（索引 6~8：年/月/日）
+        var year = YEAR_CODES.hasOwnProperty(mainCode[6]) ? YEAR_CODES[mainCode[6]] : -1;
+        var month = parseMonthCode(mainCode[7]);
+        var day = parseDayCode(mainCode[8]);
+        if (year < 0 || month < 0 || day < 0) return result;
+
+        result.valid = true;
+        result.factoryName = factory;
+        if (isValidCalendarDate(year, month, day)) {
+            result.productionDate = year + "-" + pad2(month) + "-" + pad2(day);
+        }
+        return result;
+    }
+
+    return { parse: parse };
+})();
+
+</script>
+    <!-- /KERNEL:battery-code-parser -->
     <!-- KERNEL:data-manager -->
     <script>
 /**
@@ -636,11 +771,15 @@ class DataManager extends EventTarget {
         // 电芯数据（默认 1 个电芯）
         this._cells = [{ voltage: 0, maxVoltage: 4.25 }];
 
-        // 异常记录（3 行固定）
+        // 异常记录（7 行：电池1~4 过压 + 充/放电/储存过温）
         this._abnormalRecords = [
-            { time: null, category: "电压异常", value: "" },
-            { time: null, category: "充电过温", value: "" },
-            { time: null, category: "放电过温", value: "" }
+            { time: null, category: "电池1过压", value: "" },
+            { time: null, category: "充电过温",  value: "" },
+            { time: null, category: "放电过温",  value: "" },
+            { time: null, category: "储存过温",  value: "" },
+            { time: null, category: "电池2过压", value: "" },
+            { time: null, category: "电池3过压", value: "" },
+            { time: null, category: "电池4过压", value: "" }
         ];
 
         // 历史异常日志（动态列表）
@@ -649,8 +788,11 @@ class DataManager extends EventTarget {
         // 底部电池信息
         this._batteryModel = "--";
         this._manufacturer = "--";
-        this._productionDate = "2026-01-15";
+        this._productionDate = null;   // 无初始值，未收到数据时显示 "--"
         this._batteryCode = "--";
+        // 电池编号按 GB/T 45565-2025 解析成功时，厂家/生产日期以解析结果为准，
+        // 忽略设备 0x14 帧上报的原始厂商字符串和日期
+        this._batteryCodeParsed = false;
     }
 
     // ── 事件发送 ─────────────────────────────────
@@ -765,14 +907,14 @@ class DataManager extends EventTarget {
 
     // ── 异常记录 ────────────────────────────────
     setAbnormalRecord(row, value, dt) {
-        if (row < 0 || row > 2) return;
+        if (row < 0 || row > 6) return;
         this._abnormalRecords[row].value = value;
         this._abnormalRecords[row].time = dt || new Date();
         this._emit("abnormalRecordChanged", { row, value, time: this._abnormalRecords[row].time });
     }
 
     clearAbnormalRecord(row) {
-        if (row < 0 || row > 2) return;
+        if (row < 0 || row > 6) return;
         this._abnormalRecords[row].value = "";
         this._abnormalRecords[row].time = null;
         this._emit("abnormalRecordCleared", row);
@@ -785,7 +927,10 @@ class DataManager extends EventTarget {
     }
 
     addHistoricalLog(row, value, dt) {
-        const categories = ["电压异常", "充电过温", "放电过温"];
+        const categories = [
+            "电池1过压", "充电过温", "放电过温", "储存过温",
+            "电池2过压", "电池3过压", "电池4过压"
+        ];
         this._historicalLogs.push({
             row: row,
             category: categories[row] || "未知",
@@ -813,6 +958,8 @@ class DataManager extends EventTarget {
 
     get manufacturer() { return this._manufacturer; }
     setManufacturer(v) {
+        // 电池编号解析成功时，厂家以编号解析结果（全称）为准
+        if (this._batteryCodeParsed) return;
         if (this._manufacturer !== v) {
             this._manufacturer = v;
             this._emit("manufacturerChanged", v);
@@ -821,6 +968,8 @@ class DataManager extends EventTarget {
 
     get productionDate() { return this._productionDate; }
     setProductionDate(v) {
+        // 电池编号解析成功时，生产日期以编号解析结果为准
+        if (this._batteryCodeParsed) return;
         if (this._productionDate !== v) {
             this._productionDate = v;
             this._emit("productionDateChanged", v);
@@ -832,6 +981,23 @@ class DataManager extends EventTarget {
         if (this._batteryCode !== v) {
             this._batteryCode = v;
             this._emit("batteryCodeChanged", v);
+        }
+
+        // 按 GB/T 45565-2025 解析电池编号：成功则厂家/生产日期以解析结果为准，
+        // 失败则恢复使用设备 0x14 帧上报的值（解除忽略标记）
+        var info = BatteryCodeParser.parse(v);
+        this._batteryCodeParsed = info.valid;
+        if (info.valid) {
+            if (this._manufacturer !== info.factoryName) {
+                this._manufacturer = info.factoryName;
+                this._emit("manufacturerChanged", this._manufacturer);
+            }
+            // 非法日历日期（如 9 月 31 日）productionDate 为 null，
+            // 此时仅更新厂家，生产日期保持设备上报值
+            if (info.productionDate !== null && this._productionDate !== info.productionDate) {
+                this._productionDate = info.productionDate;
+                this._emit("productionDateChanged", this._productionDate);
+            }
         }
     }
 
@@ -1289,6 +1455,7 @@ class GPDriver {
             case 0x14: this._parseBatteryInfo(buffer); break;
             case 0x15: this._parseRTCTime(buffer); break;
             case 0x16: this._parseBatteryCoding(buffer); break;
+            case 0x17: this._parseBattery234HV(buffer); break;
             }
         } catch(e) {
             console.error('_transData mode 0x' + mode.toString(16) + ' error: ' + e.message);
@@ -1334,6 +1501,10 @@ class GPDriver {
         const evol = (buffer[8] << 8) | buffer[7];
         const et   = (buffer[16] << 8) | buffer[15];
         const edt  = (buffer[24] << 8) | buffer[23];
+        // 记录4（储存高温）：仅当帧长 > 32 时存在（新固件扩展帧，旧固件无此记录）
+        let edt2 = 0;
+        if (buffer.length > 32)
+            edt2 = (buffer[32] << 8) | buffer[31];
 
         if (evol > 0) {
             const yy = (buffer[10] << 8) | buffer[9];
@@ -1359,18 +1530,31 @@ class GPDriver {
                                 bcdToDec(buffer[29]), bcdToDec16(buffer[30] >> 8, buffer[30] & 0xFF));
             this._dm.setAbnormalRecord(2, edt.toFixed(1) + " C", dt);
         }
+        if (edt2 > 0) {
+            // 记录4 时间戳在 [33..38]；帧长不足 39 时回退沿用记录3 的时间戳
+            let yy, mm, DD, hh, mi;
+            if (buffer.length >= 39) {
+                yy = (buffer[34] << 8) | buffer[33];
+                mm = buffer[35]; DD = buffer[36];
+                hh = buffer[37]; mi = buffer[38];
+            } else {
+                yy = (buffer[26] << 8) | buffer[25];
+                mm = buffer[27]; DD = buffer[28];
+                hh = buffer[29]; mi = buffer[30];
+            }
+            if (mm === 0 || DD === 0) { mm = 1; DD = 1; }
+            const dt = new Date(bcdToDec16(yy >> 8, yy & 0xFF), bcdToDec(mm) - 1, bcdToDec(DD),
+                                bcdToDec(hh), bcdToDec16(mi >> 8, mi & 0xFF));
+            this._dm.setAbnormalRecord(3, edt2.toFixed(1) + " C", dt);
+        }
     }
 
     _parseHistoricalLogs(buffer) {
-        let ecnt = (buffer[9] << 8) | buffer[8];
-        const maxRecords = Math.floor((buffer.length - 11) / 8);
-        if (ecnt > maxRecords) {
-            console.warn('0x13 record count exceeds frame capacity: ' + ecnt + ' > ' + maxRecords);
-            ecnt = maxRecords;
-        }
+        const ecnt = (buffer[9] << 8) | buffer[8];
         let addr = 10;
         this._dm.clearHistoricalLogs();
         for (let i = 0; i < ecnt; i++) {
+            if (addr + 7 >= buffer.length) break;   // 越界保护
             let val = (buffer[addr + 1] << 8) | buffer[addr];
             const yy = (buffer[addr + 3] << 8) | buffer[addr + 2];
             const mm = buffer[addr + 4], DD = buffer[addr + 5];
@@ -1378,18 +1562,30 @@ class GPDriver {
             addr += 8;
             const dt = new Date(bcdToDec16(yy >> 8, yy & 0xFF), bcdToDec(mm) - 1, bcdToDec(DD),
                                 bcdToDec(hh), bcdToDec16(mi >> 8, mi & 0xFF));
-            const typeBits = val & 0xC000;
-            val &= ~0xC000;
-            if (typeBits === 0x0000) {
-                const v = (val / 1000).toFixed(3);
-                this._dm.addHistoricalLog(0, v + " V", dt);
-            } else if (typeBits === 0x8000) {
-                const t = ntcTempLookup(val);
-                this._dm.addHistoricalLog(1, t.toFixed(1) + " C", dt);
-            } else if (typeBits === 0xC000) {
-                const t = ntcTempLookup(val);
-                this._dm.addHistoricalLog(2, t.toFixed(1) + " C", dt);
+
+            // 过压判定必须先做（bit15=0）
+            if ((val & 0x8000) === 0) {
+                // 电池号非线性映射：bits14~13 = 00->1, 10->2, 01->3, 11->4
+                let batRow;
+                switch (val & 0x6000) {
+                case 0x0000: batRow = 0; break;  // 电池1过压
+                case 0x4000: batRow = 4; break;  // 电池2过压
+                case 0x2000: batRow = 5; break;  // 电池3过压
+                default:     batRow = 6; break;  // 电池4过压 (0x6000)
+                }
+                val &= ~0xE000;   // 低 13 位 = mV
+                this._dm.addHistoricalLog(batRow, (val / 1000).toFixed(3) + " V", dt);
+            } else if ((val & 0xC000) === 0x8000) {          // 充电过温
+                val &= ~0xC000;
+                this._dm.addHistoricalLog(1, ntcTempLookup(val).toFixed(1) + " C", dt);
+            } else if ((val & 0xE000) === 0xC000) {          // 放电过温
+                val &= ~0xE000;
+                this._dm.addHistoricalLog(2, ntcTempLookup(val).toFixed(1) + " C", dt);
+            } else if ((val & 0xE000) === 0xE000) {          // 储存过温
+                val &= ~0xE000;
+                this._dm.addHistoricalLog(3, ntcTempLookup(val).toFixed(1) + " C", dt);
             }
+            // 其他未知类型：跳过
         }
     }
 
@@ -1475,6 +1671,25 @@ class GPDriver {
         }
         console.log('0x16: done');
     }
+
+    // ── 电池2/3/4 高压记录帧（0x17）──────────────────────
+    _parseBattery234HV(buffer) {
+        // 偏移 7 起 3 条 8 字节记录（2 字节数值小端 mV + 6 字节时间戳），
+        // 分别对应电池2/3/4，值为 0 表示该条无效不显示
+        for (let i = 0; i < 3; ++i) {
+            const base = 7 + i * 8;
+            const evol = (buffer[base + 1] << 8) | buffer[base];
+            if (evol <= 0) continue;
+            const yy = (buffer[base + 3] << 8) | buffer[base + 2];
+            const mm = buffer[base + 4], DD = buffer[base + 5];
+            const hh = buffer[base + 6], mi = buffer[base + 7];
+            let mm2 = mm, DD2 = DD;
+            if (mm2 === 0 || DD2 === 0) { mm2 = 1; DD2 = 1; }
+            const dt = new Date(bcdToDec16(yy >> 8, yy & 0xFF), bcdToDec(mm2) - 1, bcdToDec(DD2),
+                                bcdToDec(hh), bcdToDec16(mi >> 8, mi & 0xFF));
+            this._dm.setAbnormalRecord(4 + i, (evol / 1000).toFixed(3) + " V", dt);
+        }
+    }
 }
 
 </script>
@@ -1529,6 +1744,7 @@ document.body.classList.toggle('disconnected', !scn.connected);
     $('bi-model').textContent = '--';
     $('bi-mfr').textContent = '--';
     $('bi-code').textContent = '--';
+    $('bi-date').textContent = '--';
     return;
   }
 
@@ -1568,9 +1784,9 @@ document.body.classList.toggle('disconnected', !scn.connected);
   /* 其余 */
   $('temp-num').textContent = scn.temp;
   $('cycle-num').textContent = scn.cycle;
-  $('v-pack').textContent = scn.vPack.toFixed(2);
-  $('i-pack').textContent = scn.iPack.toFixed(2);
-  $('p-pack').textContent = scn.pPack.toFixed(1);
+  $('v-pack').textContent = scn.vPack.toFixed(3);
+  $('i-pack').textContent = scn.iPack.toFixed(3);
+  $('p-pack').textContent = scn.pPack.toFixed(3);
 
   /* 电芯 */
   const cells = scn.cells;
@@ -1585,7 +1801,7 @@ document.body.classList.toggle('disconnected', !scn.connected);
     el.className = 'cell-box';
     el.innerHTML = `<span class="cell-idx">第 ${i+1} 节</span>
                     <div class="cell-bar-wrap"><div class="cell-bar-fill${warn?' warn':''}" style="height:${pct}%"></div></div>
-                    <div class="cell-v">${v.toFixed(2)}<span class="u">V</span></div>`;
+                    <div class="cell-v">${v.toFixed(3)}<span class="u">V</span></div>`;
     listWrap.appendChild(el);
   });
 
@@ -1628,6 +1844,7 @@ document.body.classList.toggle('disconnected', !scn.connected);
   $('bi-model').textContent = scn.battery.model;
   $('bi-mfr').textContent = scn.battery.mfr;
   $('bi-code').textContent = scn.battery.code;
+  $('bi-date').textContent = scn.battery.date || '--';
 };
 
 /* 折叠交互 */
@@ -1730,12 +1947,16 @@ document.getElementById('logs-head').addEventListener('click', () => {
         vPack: 0, iPack: 0, pPack: 0,
         cycle: 0,
         cells: [0],
-        abnormals: { volt: null, chargeOT: null, dischargeOT: null },
+        abnormals: {
+            batt1: null, chargeOT: null, dischargeOT: null, storeOT: null,
+            batt2: null, batt3: null, batt4: null
+        },
         logs: [],
         battery: { model: '--', mfr: '--', date: '--', code: '--' }
     };
-    // 电压异常 / 充电过温 / 放电过温 分别对应 abnormalRecord row = 0 / 1 / 2
-    var abnormalKeys = ['volt', 'chargeOT', 'dischargeOT'];
+    // 异常记录 row 映射（与 DataManager._abnormalRecords 顺序一致）：
+    //   0=电池1过压 1=充电过温 2=放电过温 3=储存过温 4=电池2过压 5=电池3过压 6=电池4过压
+    var abnormalKeys = ['batt1', 'chargeOT', 'dischargeOT', 'storeOT', 'batt2', 'batt3', 'batt4'];
 
     function fmtTime(dt) {
         if (!dt) return '';
