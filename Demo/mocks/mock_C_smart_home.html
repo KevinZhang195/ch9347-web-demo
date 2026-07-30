@@ -241,7 +241,7 @@
     padding: 22px 26px;
   }
   .info-title { font-size: 17px; font-weight: 600; margin-bottom: 14px; }
-  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
   .info-item .k { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
   .info-item .v { font-size: 15px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -365,8 +365,9 @@
   <div class="info-card" style="margin-bottom:20px;">
     <div class="info-title">电池信息</div>
     <div class="info-grid">
+      <div class="info-item"><div class="k">电池生产厂商</div><div class="v" id="bi-mfr">--</div></div>
       <div class="info-item"><div class="k">电池型号</div><div class="v" id="bi-model">--</div></div>
-      <div class="info-item"><div class="k">生产厂家</div><div class="v" id="bi-mfr">--</div></div>
+      <div class="info-item"><div class="k">生产日期</div><div class="v" id="bi-date">--</div></div>
       <div class="info-item"><div class="k">电池编码</div><div class="v" id="bi-code">--</div></div>
     </div>
   </div>
@@ -458,6 +459,7 @@ function render(name){
     $('bi-model').textContent = '--';
     $('bi-mfr').textContent = '--';
     $('bi-code').textContent = '--';
+    $('bi-date').textContent = '--';
     return;
   }
 
@@ -480,9 +482,9 @@ function render(name){
   /* 其余 */
   $('temp-num').textContent = scn.temp;
   $('cycle-num').textContent = scn.cycle;
-  $('v-pack').textContent = scn.vPack.toFixed(2);
-  $('i-pack').textContent = scn.iPack.toFixed(2);
-  $('p-pack').textContent = scn.pPack.toFixed(1);
+  $('v-pack').textContent = scn.vPack.toFixed(3);
+  $('i-pack').textContent = scn.iPack.toFixed(3);
+  $('p-pack').textContent = scn.pPack.toFixed(3);
 
   /* 电芯 */
   const cells = scn.cells;
@@ -497,7 +499,7 @@ function render(name){
     el.className = 'cell-tile';
     el.innerHTML = `<span class="cell-idx">第 ${i+1} 节</span>
                     <div class="cell-bar-wrap"><div class="cell-bar-fill${warn?' warn':''}" style="height:${pct}%"></div></div>
-                    <div class="cell-v">${v.toFixed(2)}<span class="u">V</span></div>`;
+                    <div class="cell-v">${v.toFixed(3)}<span class="u">V</span></div>`;
     listWrap.appendChild(el);
   });
 
@@ -541,6 +543,7 @@ function render(name){
   $('bi-model').textContent = scn.battery.model;
   $('bi-mfr').textContent = scn.battery.mfr;
   $('bi-code').textContent = scn.battery.code;
+  $('bi-date').textContent = scn.battery.date || '--';
 }
 
 /* 折叠交互 */

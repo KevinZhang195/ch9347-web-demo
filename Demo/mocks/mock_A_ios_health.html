@@ -219,9 +219,9 @@
   }
   .abn-item.hit .abn-value { color: var(--red); }
 
-  /* 底部电池信息栏 · 3 列 */
+  /* 底部电池信息栏 · 4 列 */
   .infobar {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
     padding: 18px 24px;
   }
   .info-cell { min-width: 0; }
@@ -412,8 +412,9 @@
 
   <!-- 电池信息 -->
   <div class="card infobar" style="margin-bottom: 20px;">
+    <div class="info-cell"><div class="k">电池生产厂商</div><div class="v" id="bi-mfr">--</div></div>
     <div class="info-cell"><div class="k">电池型号</div><div class="v" id="bi-model">--</div></div>
-    <div class="info-cell"><div class="k">生产厂家</div><div class="v" id="bi-mfr">--</div></div>
+    <div class="info-cell"><div class="k">生产日期</div><div class="v" id="bi-date">--</div></div>
     <div class="info-cell"><div class="k">电池编码</div><div class="v" id="bi-code">--</div></div>
   </div>
 
@@ -588,6 +589,7 @@ function render(name){
     $('bi-model').textContent = '--';
     $('bi-mfr').textContent = '--';
     $('bi-code').textContent = '--';
+    $('bi-date').textContent = '--';
     return;
   }
 
@@ -633,9 +635,9 @@ function render(name){
   /* 温度：无分色，仅显示 */
   $('temp-num').textContent = scn.temp;
   $('cycle-num').textContent = scn.cycle;
-  $('v-pack').textContent = scn.vPack.toFixed(2);
-  $('i-pack').textContent = scn.iPack.toFixed(2);
-  $('p-pack').textContent = scn.pPack.toFixed(1);
+  $('v-pack').textContent = scn.vPack.toFixed(3);
+  $('i-pack').textContent = scn.iPack.toFixed(3);
+  $('p-pack').textContent = scn.pPack.toFixed(3);
 
   /* 电芯 */
   const cells = scn.cells;
@@ -653,7 +655,7 @@ function render(name){
     el.className = 'cell';
     el.innerHTML = `<span class="cell-num">第 ${i+1} 节</span>
                     <div class="cell-bar-wrap"><div class="cell-bar-fill${cls}" style="height:${pct}%"></div></div>
-                    <div class="cell-v">${v.toFixed(2)}<span class="u">V</span></div>`;
+                    <div class="cell-v">${v.toFixed(3)}<span class="u">V</span></div>`;
     listWrap.appendChild(el);
   });
 
@@ -696,6 +698,7 @@ function render(name){
   $('bi-model').textContent = scn.battery.model;
   $('bi-mfr').textContent = scn.battery.mfr;
   $('bi-code').textContent = scn.battery.code;
+  $('bi-date').textContent = scn.battery.date || '--';
 }
 
 /* 折叠交互 */

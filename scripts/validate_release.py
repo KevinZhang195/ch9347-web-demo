@@ -23,14 +23,16 @@ BUILD_SCRIPT = ROOT / "scripts" / "build_release.py"
 
 VOID_TAGS = {"area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"}
 
-KERNEL_NAMES = ["legacy-probe","ch9347-lib","browser-support","data-manager","gp-driver","log-manager"]
+KERNEL_NAMES = ["legacy-probe","ch9347-lib","browser-support","battery-code-parser","data-manager","gp-driver","log-manager"]
 COMMON_TOKENS = [
     "class DataManager", "class GPDriver", "T_0C100C_36_1023", "LogManager",
+    "var BatteryCodeParser", "GB/T 45565-2025", "_parseBattery234HV",
 ]
 REDESIGNED_TOKENS = [
     "window.render = function", "window.__bindDataManager", 'id="soc-num"', 'id="logs-card"',
+    'id="bi-date"',
 ]
-REGRESSION_IDS = ["bi-model", "bi-mfr", "bi-code"]
+REGRESSION_IDS = ["bi-model", "bi-mfr", "bi-code", "bi-date"]
 EXPECTED_RELEASE_NAMES = [
     "dashboard_bundle.html",
     "dashboard_ios_health.html",
@@ -123,11 +125,10 @@ def main() -> int:
     # ── 5. 回归不变式 ──
     for path in redesigned:
         text = path.read_text(encoding="utf-8")
-        assert 'id="bi-date"' not in text, f"{path.relative_to(ROOT)} has bi-date"
         for id_ in REGRESSION_IDS:
             if text.count(f'id="{id_}"') != 1:
                 errors.append(f"{path.relative_to(ROOT)} missing or duplicate id={id_}")
-        # 三列电池信息：无 bi-date 域
+        # 四列电池信息：需含 bi-date 域
         logs_count = text.count("document.getElementById('logs-head').addEventListener")
         if logs_count != 1:
             errors.append(f"{path.relative_to(ROOT)} logs-head listener count {logs_count} != 1")
@@ -137,7 +138,7 @@ def main() -> int:
             errors.append(f"{path.relative_to(ROOT)} missing BFCache-safe driver cleanup")
         if "this._stopped = true" not in text:
             errors.append(f"{path.relative_to(ROOT)} missing GPDriver stopped guard")
-        if "ecnt > maxRecords" not in text:
+        if "if (addr + 7 >= buffer.length) break;" not in text:
             errors.append(f"{path.relative_to(ROOT)} missing historical-record bounds check")
         if "var _renderTick = false;" not in text:
             errors.append(f"{path.relative_to(ROOT)} missing render batching")

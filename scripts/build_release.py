@@ -26,22 +26,27 @@ def extract_kernel(name: str) -> str:
         end = len(BASE)
     return BASE[start:end]
 
-legacy_probe = extract_kernel("legacy-probe")
-ch9347_lib   = extract_kernel("ch9347-lib")
-browser_sup  = extract_kernel("browser-support")
-data_manager = extract_kernel("data-manager")
-gp_driver    = extract_kernel("gp-driver")
-log_manager  = extract_kernel("log-manager")
+legacy_probe        = extract_kernel("legacy-probe")
+ch9347_lib          = extract_kernel("ch9347-lib")
+browser_sup         = extract_kernel("browser-support")
+battery_code_parser = extract_kernel("battery-code-parser")
+data_manager        = extract_kernel("data-manager")
+gp_driver           = extract_kernel("gp-driver")
+log_manager         = extract_kernel("log-manager")
 
 # 校验：这几个必须存在的关键 token
 for name, src, token in [
-    ("legacy_probe", legacy_probe, "legacy-browser"),
-    ("ch9347_lib",   ch9347_lib,   "_0x32c312"),
-    ("browser_sup",  browser_sup,  "observeResize"),
-    ("data_manager", data_manager, "class DataManager"),
-    ("gp_driver",    gp_driver,    "class GPDriver"),
-    ("gp_driver_nt", gp_driver,    "T_0C100C_36_1023"),
-    ("log_manager",  log_manager,  "LogManager"),
+    ("legacy_probe",        legacy_probe,        "legacy-browser"),
+    ("ch9347_lib",          ch9347_lib,          "_0x32c312"),
+    ("browser_sup",         browser_sup,         "observeResize"),
+    ("battery_code_parser", battery_code_parser, "var BatteryCodeParser"),
+    ("battery_code_parser2",battery_code_parser, "GB/T 45565-2025"),
+    ("data_manager",        data_manager,        "class DataManager"),
+    ("data_manager_bcp",    data_manager,        "BatteryCodeParser.parse"),
+    ("gp_driver",           gp_driver,           "class GPDriver"),
+    ("gp_driver_nt",        gp_driver,           "T_0C100C_36_1023"),
+    ("gp_driver_bat234",    gp_driver,           "_parseBattery234HV"),
+    ("log_manager",         log_manager,         "LogManager"),
 ]:
     assert token in src, f"[extract] {name} 缺少 token: {token}"
 
@@ -136,12 +141,16 @@ BRIDGE_JS = r"""
         vPack: 0, iPack: 0, pPack: 0,
         cycle: 0,
         cells: [0],
-        abnormals: { volt: null, chargeOT: null, dischargeOT: null },
+        abnormals: {
+            batt1: null, chargeOT: null, dischargeOT: null, storeOT: null,
+            batt2: null, batt3: null, batt4: null
+        },
         logs: [],
         battery: { model: '--', mfr: '--', date: '--', code: '--' }
     };
-    // 电压异常 / 充电过温 / 放电过温 分别对应 abnormalRecord row = 0 / 1 / 2
-    var abnormalKeys = ['volt', 'chargeOT', 'dischargeOT'];
+    // 异常记录 row 映射（与 DataManager._abnormalRecords 顺序一致）：
+    //   0=电池1过压 1=充电过温 2=放电过温 3=储存过温 4=电池2过压 5=电池3过压 6=电池4过压
+    var abnormalKeys = ['batt1', 'chargeOT', 'dischargeOT', 'storeOT', 'batt2', 'batt3', 'batt4'];
 
     function fmtTime(dt) {
         if (!dt) return '';
@@ -371,6 +380,7 @@ def build(name: str, ui_css: str, ui_body: str, ui_js: str) -> str:
 
 {ch9347_lib}
 {browser_sup}
+{battery_code_parser}
 {data_manager}
 {gp_driver}
     <script>

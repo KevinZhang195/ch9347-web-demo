@@ -220,9 +220,9 @@
   }
   .abn-item.hit .abn-value { color: var(--red); }
 
-  /* 底部电池信息栏 · 3 列 */
+  /* 底部电池信息栏 · 4 列 */
   .infobar {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
     padding: 18px 24px;
   }
   .info-cell { min-width: 0; }
@@ -466,10 +466,10 @@
 
   <!-- 电池信息 -->
   <div class="card infobar" style="margin-bottom: 20px;">
+    <div class="info-cell"><div class="k">电池生产厂商</div><div class="v" id="bi-mfr">--</div></div>
     <div class="info-cell"><div class="k">电池型号</div><div class="v" id="bi-model">--</div></div>
-    <div class="info-cell"><div class="k">生产厂家</div><div class="v" id="bi-mfr">--</div></div>
-    <div class="info-cell"><div class="k">电池编码</div><div class="v" id="bi-code">--</div></div>
     <div class="info-cell"><div class="k">生产日期</div><div class="v" id="bi-date">--</div></div>
+    <div class="info-cell"><div class="k">电池编码</div><div class="v" id="bi-code">--</div></div>
   </div>
 
   <!-- 历史日志（默认收起） -->
